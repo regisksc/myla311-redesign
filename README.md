@@ -9,3 +9,9 @@ A Flutter mobile app for Los Angeles city services and reports.
 The app supports drafts, photos, map search, submission recovery and saved receipts. Submissions use the city's live system.
 
 Run Flutter commands from `reports/`.
+
+Project guidance lives in [AGENTS.md](AGENTS.md) and the [glossary](GLOSSARY.md).
+The project documentation records the implementation decisions
+and implementation records. See the [agent workflow](docs/agents/issue-tracker.md)
+for local issue tracking and the [Portal API reference](docs/portal-api.md)
+for the submission contract.
