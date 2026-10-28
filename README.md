@@ -6,10 +6,12 @@ A Flutter mobile app for Los Angeles city services and reports.
 - `animation/`: the authored submission animation project.
 - `design-prototype/`: interface references and artwork.
 
-The [full portal preview](design-prototype/full-portal/reports-full-portal.html)
-designs all 68 advertised services plus account, history, and settings
-flows. Its activity stays local to the demo; the native app currently sends
-illegal-dumping reports only.
+The [canonical v2 design](design-prototype/reports-prototype-buttons-v2.html)
+extends the existing layout to all 68 advertised services. Start a Report opens
+the service catalog; the gear opens Settings with account tools. Saved reports use contextual actions. There is no bottom navigation bar.
+OpenDesign copies follow this repository file. Prototype activity stays local;
+the native app currently sends illegal-dumping reports only and still needs
+the additional catalog and account pages.
 
 The app supports drafts, photos, map search, submission recovery and saved receipts. Submissions use the city's live system.
 
@@ -19,6 +21,8 @@ Developer tools use the `REPORTS_DEV_MODE` build flag. It defaults to enabled in
 debug builds and disabled in profile and release builds. Pass
 `--dart-define=REPORTS_DEV_MODE=false` to hide them in debug, or
 `--dart-define=REPORTS_DEV_MODE=true` to explicitly enable them in another build.
+The HTML design preview hides its developer playground unless opened with
+`?dev=1`.
 
 Project guidance lives in [AGENTS.md](AGENTS.md) and the [glossary](GLOSSARY.md).
 The project documentation records the implementation decisions
