@@ -1,19 +1,23 @@
 # MyLA311
 
-A Flutter mobile app for Los Angeles city services and reports.
+A Flutter app for preparing Los Angeles service reports and reporting illegal dumping to MyLA311.
 
-- `reports/`: native app, organized into app composition, shared design, and Report, Home and Dev/API features.
+- `reports/`: native app, organized into app composition, shared design, Reports, Services, Account, Home and Dev/API features.
 - `animation/`: the authored submission animation project.
 - `design-prototype/`: interface references and artwork.
 
 The [canonical v2 design](design-prototype/reports-prototype-buttons-v2.html)
 extends the existing layout to all 68 advertised services. Start a Report opens
 the service catalog; the gear opens Settings with account tools. Saved reports use contextual actions. There is no bottom navigation bar.
-OpenDesign copies follow this repository file. Prototype activity stays local;
-the native app currently sends illegal-dumping reports only and still needs
-the additional catalog and account pages.
+OpenDesign copies follow this repository file. The native app includes the
+catalog, service information, guided previews, Settings, account demonstrations,
+Help and saved reports. Other services and account access
+remain local previews. Only illegal-dumping submissions use the City's live API.
 
-The app supports drafts, photos, map search, submission recovery and saved receipts. Submissions use the city's live system.
+The live illegal-dumping flow supports drafts, photos, map search, anonymous or
+named contact, submission recovery and saved receipts. Its six steps are Location,
+Items, Photos, Details, Contact and Review. Existing drafts retain their saved
+progress, and clearing preview data preserves real submissions and receipts.
 
 Run Flutter commands from `reports/`.
 
