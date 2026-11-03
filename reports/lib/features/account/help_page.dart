@@ -4,7 +4,7 @@ import '../dev_api/presentation/dev_api_entry_button.dart';
 import '../report/application/report_store.dart';
 import '../report/data/local_report_store.dart';
 
-class HelpPage extends StatelessWidget {
+class HelpPage extends StatefulWidget {
   const HelpPage({
     super.key,
     this.initialArticle,
@@ -19,6 +19,7 @@ class HelpPage extends StatelessWidget {
     'privacy': Icons.shield_outlined,
     'permissions': Icons.location_on_outlined,
     'recovery': Icons.access_time,
+    'city-contact': Icons.phone_outlined,
   };
   static Widget iconTile(IconData? icon) => Container(
     width: 42,
@@ -51,10 +52,37 @@ class HelpPage extends StatelessWidget {
       'Keep track without creating duplicates.',
       'A draft is unfinished. A demo receipt is a local preview, not a City confirmation. A real send can have an unknown outcome if interrupted. Keep your Service Request number when the City confirms a real submission. Check the original request before trying again to avoid duplicates.',
     ),
+    'city-contact': (
+      'Who to call at MyLA311',
+      'City information and non-emergency assistance.',
+      'For help finding City services or answers to questions, contact MyLA311 at 311 or 213-473-3231. You can also email 311@lacity.org. For an immediate emergency, call 911. Contacting MyLA311 does not submit a Report through this app. Source: City of Los Angeles, MyLA311 Frequently Asked Questions (lacity.gov/myla311/myla311-frequently-asked-questions).',
+    ),
   };
+
+  @override
+  State<HelpPage> createState() => _HelpPageState();
+}
+
+class _HelpPageState extends State<HelpPage> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final article = articles[initialArticle];
+    final article = HelpPage.articles[widget.initialArticle];
+    final matches = HelpPage.articles.entries
+        .where(
+          (entry) => '${entry.value.$1} ${entry.value.$2} ${entry.value.$3}'
+              .toLowerCase()
+              .contains(_query),
+        )
+        .toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Help')),
       body: SafeArea(
@@ -66,7 +94,7 @@ class HelpPage extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: devApiPill(
                   context,
-                  store: store ?? const LocalReportStore(),
+                  store: widget.store ?? const LocalReportStore(),
                 ),
               ),
               const SizedBox(height: 20),
@@ -76,13 +104,13 @@ class HelpPage extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () {
-                    if (fromOverview) {
+                    if (widget.fromOverview) {
                       Navigator.pop(context);
                     } else {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute<void>(
-                          builder: (_) => HelpPage(store: store),
+                          builder: (_) => HelpPage(store: widget.store),
                         ),
                       );
                     }
@@ -93,7 +121,7 @@ class HelpPage extends StatelessWidget {
               ),
               Align(
                 alignment: Alignment.centerLeft,
-                child: iconTile(icons[initialArticle]),
+                child: HelpPage.iconTile(HelpPage.icons[widget.initialArticle]),
               ),
               const SizedBox(height: 8),
               Text(
@@ -116,14 +144,33 @@ class HelpPage extends StatelessWidget {
               ),
               Text(
                 'Let’s clear things up.',
-                style: Theme.of(context).textTheme.headlineLarge,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontSize: 29,
+                  height: 1.12,
+                ),
               ),
-              const Text('A few useful answers, without the fine print.'),
+              const SizedBox(height: 10),
+              const Text(
+                'A few useful answers, without the fine print.',
+                style: TextStyle(fontSize: 15, height: 1.6),
+              ),
               const SizedBox(height: 16),
-              for (final entry in articles.entries)
+              TextField(
+                controller: _search,
+                decoration: const InputDecoration(
+                  labelText: 'Search help',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (value) =>
+                    setState(() => _query = value.trim().toLowerCase()),
+              ),
+              const SizedBox(height: 16),
+              if (matches.isEmpty)
+                const Text('No help topics found. Try another word.'),
+              for (final entry in matches)
                 Card(
                   child: ListTile(
-                    leading: iconTile(icons[entry.key]),
+                    leading: HelpPage.iconTile(HelpPage.icons[entry.key]),
                     title: Text(entry.value.$1),
                     subtitle: Text(entry.value.$2),
                     trailing: const Icon(Icons.arrow_forward),
@@ -132,7 +179,7 @@ class HelpPage extends StatelessWidget {
                       MaterialPageRoute<void>(
                         builder: (_) => HelpPage(
                           initialArticle: entry.key,
-                          store: store,
+                          store: widget.store,
                           fromOverview: true,
                         ),
                       ),

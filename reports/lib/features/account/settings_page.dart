@@ -214,10 +214,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Text(
                       'Your account',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge?.copyWith(height: 1.2),
                     ),
+                    const SizedBox(height: 12),
                     const Text(
                       'Sign in, manage your profile, or keep using MyLA311 without an account.',
+                      style: TextStyle(fontSize: 15, height: 1.6),
                     ),
                     OutlinedButton(
                       onPressed: () => _open(
@@ -246,9 +250,16 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           Text(
             widget.showDemoUpdates ? 'Preferences' : 'Settings',
-            style: Theme.of(context).textTheme.headlineLarge,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontSize: widget.showDemoUpdates ? 30 : 29,
+              height: widget.showDemoUpdates ? 1.2 : 1.12,
+            ),
           ),
-          const Text('A few choices for this device.'),
+          const SizedBox(height: 10),
+          const Text(
+            'A few choices for this device.',
+            style: TextStyle(fontSize: 15, height: 1.6),
+          ),
           const SizedBox(height: 20),
           if (widget.showDemoUpdates)
             Card(
@@ -300,12 +311,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     'Saved contact details',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(height: 1.2),
                   ),
+                  const SizedBox(height: 12),
                   Text(
                     contact == null
                         ? 'Nothing remembered for future reports.'
                         : '${contact!.firstName} ${contact!.lastName} · ${contact!.email}',
+                    style: const TextStyle(fontSize: 15, height: 1.6),
                   ),
                   if (contact != null)
                     OutlinedButton(
@@ -314,6 +329,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   const Text(
                     'Forgetting these details does not change existing reports.',
+                    style: TextStyle(fontSize: 15, height: 1.6),
                   ),
                 ],
               ),
@@ -327,10 +343,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     'Privacy & permissions',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(height: 1.2),
                   ),
+                  const SizedBox(height: 12),
                   const Text(
                     'Location is requested only when you choose to use it. Photos are optional. Your device manages permissions.',
+                    style: TextStyle(fontSize: 15, height: 1.6),
                   ),
                   TextButton(
                     onPressed: () =>
@@ -368,10 +388,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     'Data on this device',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(height: 1.2),
                   ),
+                  const SizedBox(height: 12),
                   const Text(
                     'Clear local preview data and remembered contact. Real submissions and unconfirmed sends are kept.',
+                    style: TextStyle(fontSize: 15, height: 1.6),
                   ),
                   OutlinedButton(
                     onPressed: _clear,

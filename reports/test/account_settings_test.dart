@@ -252,6 +252,7 @@ void main() {
     );
     await tester.scrollUntilVisible(find.text('Clear local preview data'), 200);
     await tester.ensureVisible(find.text('Clear local preview data'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Clear local preview data'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Keep it'));

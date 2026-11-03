@@ -26,12 +26,32 @@ void main() {
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HelpPage()));
     expect(find.byIcon(Icons.article_outlined), findsOneWidget);
-    expect(find.text('What this preview can do'), findsOneWidget);
+    final topics = find.byWidgetPredicate(
+      (widget) =>
+          widget is Scrollable && widget.axisDirection == AxisDirection.down,
+    );
+    await tester.scrollUntilVisible(
+      find.text('What this preview can do'),
+      200,
+      scrollable: topics,
+    );
+    expect(find.text('What this preview can do').hitTestable(), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('How reporting works'),
+      -200,
+      scrollable: topics,
+    );
     await tester.tap(find.text('How reporting works'));
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.article_outlined), findsOneWidget);
+    expect(find.text('From a location to your report.'), findsOneWidget);
     await tester.tap(find.text('All help topics'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Let’s clear things up.'),
+      -200,
+      scrollable: topics,
+    );
     expect(find.text('Let’s clear things up.'), findsOneWidget);
   });
 
@@ -152,15 +172,21 @@ void main() {
           ),
       isTrue,
     );
-    final note = tester.widget<Card>(
-      find
-          .ancestor(
-            of: find.text('What this preview can do'),
-            matching: find.byType(Card),
-          )
-          .first,
+    await tester.scrollUntilVisible(
+      find.text('What this preview can do'),
+      200,
+      scrollable: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
     );
-    expect(note.color, const Color(0xfff7f7f7));
+    expect(find.text('What this preview can do').hitTestable(), findsOneWidget);
+    final note = find.ancestor(
+      of: find.text('What this preview can do'),
+      matching: find.byType(Card),
+    );
+    expect(note, findsOneWidget);
+    expect(tester.widget<Card>(note).color, const Color(0xfff7f7f7));
   });
 
   testWidgets('settings links show direction arrows', (tester) async {

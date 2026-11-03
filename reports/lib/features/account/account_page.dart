@@ -47,12 +47,16 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             Text(
               'Your account',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
-            const Text(
-              'Explore account tools without connecting to a City account.',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontSize: 30, height: 1.2),
             ),
             const SizedBox(height: 16),
+            const Text(
+              'Explore account tools without connecting to a City account.',
+              style: TextStyle(fontSize: 16, height: 1.5),
+            ),
+            const SizedBox(height: 24),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -61,8 +65,13 @@ class _AccountPageState extends State<AccountPage> {
                   children: [
                     Text(
                       'Demo account',
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 25,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
+                    const SizedBox(height: 12),
                     const Text(
                       'Sign in, registration and profile changes are simulated locally.',
                     ),
@@ -252,14 +261,20 @@ class _AccountFormState extends State<_AccountForm> {
                 label: Text(mode == 'recovery' ? 'Sign in' : widget.backLabel),
               ),
             ),
-            Text(title, style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontSize: 30, height: 1.2),
+            ),
+            const SizedBox(height: 16),
             Text(switch (mode) {
               'signin' => 'Demo only. Do not enter a real password.',
               'register' => 'No real account will be created.',
               'recovery' => 'This preview does not send recovery emails.',
               _ => 'These details are saved only on this device.',
-            }),
-            const SizedBox(height: 16),
+            }, style: const TextStyle(fontSize: 16, height: 1.5)),
+            const SizedBox(height: 44),
             Form(
               key: form,
               child: Column(
@@ -268,9 +283,13 @@ class _AccountFormState extends State<_AccountForm> {
                   if (mode == 'register' || mode == 'profile') ...[
                     Text(
                       mode == 'profile' ? 'Display name' : 'Name',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Semantics(
                       label: mode == 'profile' ? 'Display name' : 'Name',
                       child: TextFormField(
@@ -284,13 +303,17 @@ class _AccountFormState extends State<_AccountForm> {
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                   ],
                   const Text(
                     'Email',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Semantics(
                     label: 'Email',
                     child: TextFormField(
@@ -306,12 +329,16 @@ class _AccountFormState extends State<_AccountForm> {
                     ),
                   ),
                   if (mode == 'signin') ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                     const Text(
                       'Demo password',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Semantics(
                       label: 'Demo password',
                       child: TextFormField(
@@ -327,14 +354,17 @@ class _AccountFormState extends State<_AccountForm> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: _submit,
-                    child: Text(switch (mode) {
-                      'signin' => 'Continue in demo',
-                      'register' => 'Create local profile',
-                      'recovery' => 'Preview recovery',
-                      _ => 'Save demo profile',
-                    }),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton(
+                      onPressed: _submit,
+                      child: Text(switch (mode) {
+                        'signin' => 'Continue in demo',
+                        'register' => 'Create local profile',
+                        'recovery' => 'Preview recovery',
+                        _ => 'Save demo profile',
+                      }),
+                    ),
                   ),
                 ],
               ),

@@ -30,6 +30,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Clear local preview data'), 200);
     await tester.ensureVisible(find.text('Clear local preview data'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Clear local preview data'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Clear preview data'));
@@ -116,6 +117,7 @@ void main() {
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Clear local preview data'), 200);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Clear local preview data'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Clear preview data'));
