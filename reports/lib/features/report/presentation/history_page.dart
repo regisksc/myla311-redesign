@@ -232,10 +232,19 @@ class _HistoryPageState extends State<HistoryPage> {
         ),
         const SizedBox(height: 16),
         OutlinedButton(
-          onPressed: () => Navigator.push<void>(
-            context,
-            MaterialPageRoute<void>(builder: (_) => const ServiceHistoryPage()),
-          ),
+          onPressed: () async {
+            final startReport = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute<bool>(
+                builder: (historyContext) => ServiceHistoryPage(
+                  onStartReport: widget.onStartReport == null
+                      ? null
+                      : () => Navigator.pop(historyContext, true),
+                ),
+              ),
+            );
+            if (mounted && startReport == true) widget.onStartReport?.call();
+          },
           child: const Text('View other service reports'),
         ),
       ],
