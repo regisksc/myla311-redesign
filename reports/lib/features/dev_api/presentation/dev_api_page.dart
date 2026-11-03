@@ -387,15 +387,8 @@ class _DevApiPageState extends State<DevApiPage> {
                     tooltip: 'Close Dev API mode',
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
-                    style: IconButton.styleFrom(
-                      minimumSize: const Size(48, 48),
-                      side: const BorderSide(
-                        color: ReportsStyle.border,
-                        width: 2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                    style: ReportsStyle.iconButtonStyle(inset: true).copyWith(
+                      minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
                     ),
                   ),
                 ],

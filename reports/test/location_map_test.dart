@@ -80,7 +80,7 @@ void main() {
     await tester.pumpAndSettle();
     outcomes['selected'] = selected;
     expect(outcomes, {
-      'searchButton': 0,
+      'searchButton': 1,
       'beforeFirstDeadline': <String>[],
       'beforeResetDeadline': <String>[],
       'atResetDeadline': ['200 N Spring St, Los Angeles, CA'],
@@ -268,6 +268,11 @@ void main() {
       final originalZoom = MapCamera.of(
         tester.element(find.byType(TileLayer)),
       ).zoom;
+      await Scrollable.ensureVisible(
+        tester.element(find.byTooltip('Zoom in')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Zoom in'));
       await tester.pumpAndSettle();
       expect(
@@ -290,7 +295,11 @@ void main() {
         tester.element(find.byType(TileLayer)),
       ).center;
       expect(center.latitude, isNot(34.054047));
-      await tester.ensureVisible(find.text('Use map center'));
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Use map center')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Use map center'));
       await tester.pumpAndSettle();
 
@@ -438,7 +447,7 @@ void main() {
       final address = find.byKey(const Key('report-address'));
       final continueButton = find.widgetWithText(FilledButton, 'Continue');
       expect(address, findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Search'), findsNothing);
+      expect(find.widgetWithText(OutlinedButton, 'Search'), findsOneWidget);
       await tester.enterText(address, '');
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
@@ -479,7 +488,11 @@ void main() {
         '${tester.widget<TextField>(address).controller!.text} ',
       );
       await tester.pump(const Duration(seconds: 2));
-      await tester.ensureVisible(find.text('Use map center'));
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Use map center')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.pump();
       await tester.tap(find.text('Use map center'));
       await tester.pumpAndSettle();

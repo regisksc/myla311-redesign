@@ -32,7 +32,7 @@ void main() {
   });
 
   testWidgets(
-    'the app-bar close action is labeled and cancellation keeps a draft',
+    'the in-flow discard action is labeled and cancellation keeps a draft',
     (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(800, 2000);
@@ -64,24 +64,40 @@ void main() {
       await tester.tap(continueDraft);
       await _waitFor(
         tester,
-        () => find.byTooltip('Discard draft').evaluate().isNotEmpty,
+        () => find.text('Discard draft').evaluate().isNotEmpty,
       );
-      expect(find.text('Discard draft'), findsNothing);
+      expect(find.text('Discard draft'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Discard draft'));
+      for (
+        var scroll = 0;
+        scroll < 5 && find.text('Discard draft').evaluate().isEmpty;
+        scroll++
+      ) {
+        await tester.dragFrom(
+          tester.getTopLeft(find.byType(ListView).first) + const Offset(4, 100),
+          const Offset(0, -400),
+        );
+        await tester.pumpAndSettle();
+      }
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Discard draft')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Discard draft'));
       await tester.pumpAndSettle();
       expect(find.text('Discard draft?'), findsOneWidget);
 
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(find.text('New report'), findsOneWidget);
-      expect(find.byTooltip('Discard draft'), findsOneWidget);
+      expect(find.text('Discard draft'), findsOneWidget);
       final retained = await tester.runAsync(testStore.loadDraft);
       expect(retained?.toJson(), ReportDraft.fromJson(draft.toJson()).toJson());
     },
   );
 
-  testWidgets('an uncertain submission has no app-bar draft discard action', (
+  testWidgets('an uncertain submission has no draft discard action', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -124,6 +140,7 @@ void main() {
     );
 
     expect(find.byTooltip('Discard draft'), findsNothing);
+    expect(find.text('Discard draft', skipOffstage: false), findsNothing);
   });
 }
 

@@ -82,6 +82,7 @@ class _LocationMapState extends State<LocationMap> {
   }
 
   Future<void> _searchAddress() async {
+    _searchDelay?.cancel();
     final query = _address.text.trim();
     if (query.isEmpty || _searching || !widget.enabled) return;
     final version = ++_searchVersion;
@@ -147,16 +148,45 @@ class _LocationMapState extends State<LocationMap> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
-          key: const Key('report-address'),
-          controller: _address,
-          enabled: widget.enabled,
-          textInputAction: TextInputAction.search,
-          onChanged: _scheduleSearch,
-          decoration: const InputDecoration(
-            labelText: 'Street address or intersection',
-            hintText: 'e.g. Main St & 1st St',
-          ),
+        Text(
+          'Street address or intersection (required)',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                label: 'Street address or intersection, required',
+                child: TextField(
+                  key: const Key('report-address'),
+                  controller: _address,
+                  enabled: widget.enabled,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _searchAddress(),
+                  onChanged: _scheduleSearch,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Main St & 1st St',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(72, 52),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              onPressed: widget.enabled && !_searching ? _searchAddress : null,
+              child: const Text('Search'),
+            ),
+          ],
         ),
         if (_searching) const Text('Searching…'),
         if (_searchError != null)
@@ -164,8 +194,12 @@ class _LocationMapState extends State<LocationMap> {
             _searchError!,
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
-        const Text('Tap the map or move it, then choose its center.'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
+        Text(
+          'Search for an address, tap the map, or move it and choose its center.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 18),
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: SizedBox(

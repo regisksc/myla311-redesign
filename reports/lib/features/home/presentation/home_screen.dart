@@ -208,21 +208,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: const _ReportsWordmark(),
                                 ),
                               ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: ReportsStyle.border,
-                                    width: 2,
-                                  ),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: ReportsStyle.border,
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ],
-                                  color: Colors.white,
-                                ),
+                              Padding(
+                                padding: const EdgeInsets.all(2),
                                 child: IconButton(
                                   tooltip: 'Settings',
                                   icon: const Icon(

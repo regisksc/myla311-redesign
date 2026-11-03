@@ -521,7 +521,24 @@ void main() {
         await tester.pump();
         await store.started.future;
         if (discard) {
-          await tester.tap(find.byTooltip('Discard draft'));
+          for (
+            var scroll = 0;
+            scroll < 5 && find.text('Discard draft').evaluate().isEmpty;
+            scroll++
+          ) {
+            await tester.dragFrom(
+              tester.getTopLeft(find.byType(ListView).first) +
+                  const Offset(4, 100),
+              const Offset(0, -400),
+            );
+            await tester.pumpAndSettle();
+          }
+          await Scrollable.ensureVisible(
+            tester.element(find.text('Discard draft')),
+            alignment: 0.5,
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Discard draft'));
           await tester.pumpAndSettle();
           await tester.tap(find.text('Remove'));
         } else {
@@ -550,7 +567,23 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Discard draft'));
+    for (
+      var scroll = 0;
+      scroll < 5 && find.text('Discard draft').evaluate().isEmpty;
+      scroll++
+    ) {
+      await tester.dragFrom(
+        tester.getTopLeft(find.byType(ListView).first) + const Offset(4, 100),
+        const Offset(0, -400),
+      );
+      await tester.pumpAndSettle();
+    }
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Discard draft')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Discard draft'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Remove'));
     await tester.pumpAndSettle();
@@ -624,6 +657,7 @@ void main() {
     await tester.tap(find.text('Open report'));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Discard draft'), findsNothing);
+    expect(find.text('Discard draft', skipOffstage: false), findsNothing);
     await tester.tap(find.text('Save and close'));
     await tester.pumpAndSettle();
     expect(find.text('Open report'), findsOneWidget);

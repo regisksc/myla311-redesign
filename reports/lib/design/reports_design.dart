@@ -32,6 +32,25 @@ abstract final class ReportsStyle {
         ),
       );
 
+  static ButtonStyle iconButtonStyle({bool inset = false}) =>
+      IconButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        foregroundColor: ink,
+        disabledForegroundColor: muted,
+        minimumSize: const Size(44, 44),
+        side: BorderSide.none,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(inset ? 14 : 12),
+        ),
+        enableFeedback: false,
+      ).copyWith(
+        backgroundBuilder: (context, states, child) => ReportsIconButtonSurface(
+          states: states,
+          inset: inset,
+          child: child!,
+        ),
+      );
+
   static ThemeData get theme {
     final scheme = ColorScheme.fromSeed(
       seedColor: orange,
@@ -94,6 +113,7 @@ abstract final class ReportsStyle {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(style: raisedButtonStyle()),
+      iconButtonTheme: IconButtonThemeData(style: iconButtonStyle()),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(48, 52),
@@ -134,6 +154,91 @@ abstract final class ReportsStyle {
         linearTrackColor: border,
       ),
       dividerTheme: const DividerThemeData(color: border, thickness: 2),
+    );
+  }
+}
+
+class ReportsIconButtonSurface extends StatelessWidget {
+  const ReportsIconButtonSurface({
+    super.key,
+    required this.states,
+    required this.inset,
+    required this.child,
+  });
+
+  final Set<WidgetState> states;
+  final bool inset;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !states.contains(WidgetState.disabled);
+    final pressed = enabled && states.contains(WidgetState.pressed);
+    final emphasized =
+        states.contains(WidgetState.focused) ||
+        states.contains(WidgetState.hovered);
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    final duration = inset && !reduced
+        ? const Duration(milliseconds: 180)
+        : Duration.zero;
+    final travel = pressed && !(inset && reduced) ? 3.0 : 0.0;
+    final depth = !enabled
+        ? 0.0
+        : pressed
+        ? (inset ? 1.0 : 0.0)
+        : 3.0;
+    final radius = BorderRadius.circular(inset ? 14 : 12);
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        AnimatedPositioned(
+          duration: duration,
+          curve: Curves.ease,
+          left: 0,
+          right: 0,
+          top: travel,
+          bottom: depth,
+          child: AnimatedContainer(
+            duration: duration,
+            curve: Curves.ease,
+            decoration: BoxDecoration(
+              color: enabled ? Colors.white : ReportsStyle.surface,
+              borderRadius: radius,
+              border: Border.all(
+                color: emphasized ? ReportsStyle.ink : ReportsStyle.border,
+                width: 2,
+              ),
+              boxShadow: [
+                if (depth > 0)
+                  BoxShadow(
+                    color: ReportsStyle.border,
+                    offset: Offset(0, depth),
+                  ),
+              ],
+            ),
+            foregroundDecoration: inset && pressed
+                ? BoxDecoration(
+                    borderRadius: radius,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        ReportsStyle.ink.withValues(alpha: .18),
+                        Colors.transparent,
+                      ],
+                      stops: const [0, .12],
+                    ),
+                  )
+                : null,
+          ),
+        ),
+        AnimatedContainer(
+          duration: duration,
+          curve: Curves.ease,
+          transform: Matrix4.translationValues(0, travel, 0),
+          child: child,
+        ),
+      ],
     );
   }
 }

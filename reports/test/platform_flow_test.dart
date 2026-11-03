@@ -454,9 +454,10 @@ void main() {
       await tester.tap(_homeResumeContinueButton());
       await _waitFor(
         tester,
-        () => find.byTooltip('Discard draft').evaluate().isNotEmpty,
+        () => find.text('Discard draft').evaluate().isNotEmpty,
       );
-      await tester.tap(find.byTooltip('Discard draft'));
+      await tester.ensureVisible(find.text('Discard draft'));
+      await tester.tap(find.text('Discard draft'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Remove'));
       await _waitFor(
@@ -1160,6 +1161,25 @@ void main() {
           return _syntheticPortalReply(request);
         }),
       );
+      void expectCatalogReadsOnly() {
+        expect(
+          requests.map((request) => '${request.method} ${request.url.path}'),
+          ['GET /s/', 'POST /s/sfsites/aura'],
+        );
+        final form = Uri.splitQueryString(requests.last.body);
+        expect(form['aura.pageURI'], '/s/');
+        final actions = jsonDecode(form['message']!)['actions'] as List;
+        expect(actions, hasLength(1));
+        expect(actions.single['params'], {
+          'namespace': '',
+          'classname': 'X11_H_ParentController',
+          'method': 'fetchInitialDetails',
+          'params': <String, dynamic>{},
+          'cacheable': true,
+          'isContinuation': false,
+        });
+      }
+
       await _openReport(tester, client: client);
       await _openPhotos(tester, location);
       await tester.tap(find.text('Take photo'));
@@ -1177,7 +1197,7 @@ void main() {
         tester,
         () => _homeResumeContinueButton().evaluate().isNotEmpty,
       );
-      expect(requests, isEmpty);
+      expectCatalogReadsOnly();
       await tester.tap(_homeResumeContinueButton());
       await _waitFor(
         tester,
@@ -1219,6 +1239,7 @@ void main() {
       location.position = Future.value(
         Position.fromMap({'latitude': 34.06, 'longitude': -118.25}),
       );
+      await tester.ensureVisible(find.text('Location set ✓'));
       await tester.tap(find.text('Location set ✓'));
       await tester.pumpAndSettle();
       await _saveReviewEdit(tester);
@@ -1293,7 +1314,7 @@ void main() {
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
       expect(find.text('Edit Description'), findsOneWidget);
-      expect(requests, isEmpty);
+      expectCatalogReadsOnly();
       await tester.tap(find.widgetWithText(FilledButton, 'Submit'));
       await _waitFor(
         tester,
@@ -1521,6 +1542,12 @@ void main() {
   ) async {
     location.enabled = false;
     await _openReport(tester);
+    await tester.pumpAndSettle();
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Use my location')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Use my location'));
     await tester.pumpAndSettle();
 
@@ -1583,6 +1610,12 @@ void main() {
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetViewInsets);
     location.permission = LocationPermission.whileInUse;
+    await tester.pumpAndSettle();
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Use my location')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Use my location'));
     await tester.pumpAndSettle();
     await _continue(tester);
@@ -1715,6 +1748,12 @@ void main() {
     location.permission = LocationPermission.whileInUse;
     location.position = result.future;
     await _openReport(tester);
+    await tester.pumpAndSettle();
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Use my location')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Use my location'));
     await tester.pumpAndSettle();
     await tester.pageBack();
@@ -1741,6 +1780,12 @@ void main() {
     (tester) async {
       await _openReport(tester);
 
+      await tester.pumpAndSettle();
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Use my location')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Use my location'));
       await tester.pumpAndSettle();
 
@@ -1817,6 +1862,12 @@ Future<void> _selectLooseItem(WidgetTester tester) async {
 
 Future<void> _openPhotos(WidgetTester tester, _Location location) async {
   location.permission = LocationPermission.whileInUse;
+  await tester.pumpAndSettle();
+  await Scrollable.ensureVisible(
+    tester.element(find.text('Use my location')),
+    alignment: 0.5,
+  );
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Use my location'));
   await tester.pumpAndSettle();
   await _continue(tester);
@@ -2018,7 +2069,20 @@ http.Response _syntheticPortalReply(http.Request request) {
       'popularCaseList': [
         {
           'uxType': 'Illegal Dumping Item Pickup',
+          'uxGroup': 'Refuse & Collection Services',
           'caseConfigId': 'synthetic-type',
+        },
+      ],
+      'caseConfigurationList': [
+        {
+          'uxGroup': 'Refuse & Collection Services',
+          'caseConfigurations': [
+            {
+              'uxType': 'Illegal Dumping Item Pickup',
+              'uxGroup': 'Refuse & Collection Services',
+              'caseConfigId': 'synthetic-type',
+            },
+          ],
         },
       ],
     },

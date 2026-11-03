@@ -90,12 +90,6 @@ extension _ReportFlowSteps on _ReportFlowPageState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        OutlinedButton.icon(
-          onPressed: _locked || _locating ? null : _locate,
-          icon: const Icon(Icons.my_location),
-          label: Text(position == null ? 'Use my location' : 'Location set ✓'),
-        ),
-        const SizedBox(height: 18),
         LocationMap(
           position: position == null
               ? null
@@ -110,6 +104,12 @@ extension _ReportFlowSteps on _ReportFlowPageState {
             );
             _persistDraft();
           },
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: _locked || _locating ? null : _locate,
+          icon: const Icon(Icons.my_location),
+          label: Text(position == null ? 'Use my location' : 'Location set ✓'),
         ),
         if (error != null) ...[
           const SizedBox(height: 12),
@@ -188,6 +188,7 @@ extension _ReportFlowSteps on _ReportFlowPageState {
             for (final option in families)
               _itemChoice(
                 label: option.name,
+                minHeight: 100,
                 selected: option.name == familyName,
                 onTap: () {
                   _update(() {
@@ -304,19 +305,29 @@ extension _ReportFlowSteps on _ReportFlowPageState {
     required VoidCallback onTap,
     IconData? itemIcon,
     String? description,
+    double minHeight = 52,
   }) => Semantics(
     selected: selected,
     child: OutlinedButton(
-      style: ReportsStyle.raisedButtonStyle(
-        shadowColor: selected ? ReportsStyle.orangeDark : ReportsStyle.border,
-        backgroundColor: selected
-            ? Color.alphaBlend(ReportsStyle.orange.withAlpha(24), Colors.white)
-            : Colors.white,
-        side: BorderSide(
-          color: selected ? ReportsStyle.orangeDark : ReportsStyle.border,
-          width: 2,
-        ),
-      ).copyWith(padding: const WidgetStatePropertyAll(EdgeInsets.all(14))),
+      style:
+          ReportsStyle.raisedButtonStyle(
+            shadowColor: selected
+                ? ReportsStyle.orangeDark
+                : ReportsStyle.border,
+            backgroundColor: selected
+                ? Color.alphaBlend(
+                    ReportsStyle.orange.withAlpha(24),
+                    Colors.white,
+                  )
+                : Colors.white,
+            side: BorderSide(
+              color: selected ? ReportsStyle.orangeDark : ReportsStyle.border,
+              width: 2,
+            ),
+          ).copyWith(
+            minimumSize: WidgetStatePropertyAll(Size(48, minHeight)),
+            padding: const WidgetStatePropertyAll(EdgeInsets.all(14)),
+          ),
       onPressed: _locked ? null : onTap,
       child: Row(
         children: [
@@ -588,7 +599,7 @@ extension _ReportFlowSteps on _ReportFlowPageState {
         key: const Key('report-description'),
         controller: _desc,
         enabled: !_locked,
-        maxLines: 5,
+        maxLines: 7,
         maxLength: 750,
         onChanged: (_) {
           _update(() {});

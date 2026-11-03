@@ -404,6 +404,14 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
       },
       child: Scaffold(
         appBar: AppBar(
+          centerTitle: number == null,
+          titleTextStyle: number == null
+              ? const TextStyle(
+                  color: ReportsStyle.ink,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                )
+              : null,
           leading: BackButton(
             onPressed: () {
               if (number != null) {
@@ -426,21 +434,21 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
                 )
               else
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: ReportsStyle.ink,
+                    textStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
                   onPressed: _saveAndClose,
                   child: const Text('Save and close'),
                 ),
-            if (!_locked && _savedDraft == null)
-              IconButton(
-                tooltip: 'Discard draft',
-                onPressed: () => confirmLocalRemoval(
-                  context,
-                  title: 'Discard draft?',
-                  remove: _discardAfterPendingWrites,
-                ),
-                icon: const Icon(Icons.close),
-              ),
           ],
-          title: const Text('New report'),
+          title: number == null
+              ? const Text('New report', style: TextStyle(fontSize: 16))
+              : const Text('Receipt'),
         ),
         body: SafeArea(
           child: Center(
@@ -452,23 +460,25 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
                   controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                   children: [
-                    Text(
-                      'Step ${_step + 1} of 6 · ${labels[_step]}',
-                      style: theme.textTheme.labelMedium,
-                    ),
-                    const SizedBox(height: 10),
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(end: (_step + 1) / 6),
-                      duration: duration,
-                      builder: (context, value, child) =>
-                          LinearProgressIndicator(
-                            value: value,
-                            minHeight: 10,
-                            borderRadius: BorderRadius.circular(10),
-                            semanticsLabel: 'Report progress',
-                          ),
-                    ),
-                    const SizedBox(height: 28),
+                    if (number == null) ...[
+                      Text(
+                        'Step ${_step + 1} of 6 · ${labels[_step]}',
+                        style: theme.textTheme.labelMedium,
+                      ),
+                      const SizedBox(height: 10),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(end: (_step + 1) / 6),
+                        duration: duration,
+                        builder: (context, value, child) =>
+                            LinearProgressIndicator(
+                              value: value,
+                              minHeight: 10,
+                              borderRadius: BorderRadius.circular(10),
+                              semanticsLabel: 'Report progress',
+                            ),
+                      ),
+                      const SizedBox(height: 28),
+                    ],
                     if (_submissionUncertain) ...[
                       if (failure != null) ...[
                         Text(
@@ -522,13 +532,15 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
                         headings[_step],
                         style: theme.textTheme.headlineMedium,
                       ),
-                      const SizedBox(height: 13),
-                      Text(
-                        descriptions[_step],
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: ReportsStyle.muted,
+                      if (_step != 0) ...[
+                        const SizedBox(height: 13),
+                        Text(
+                          descriptions[_step],
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: ReportsStyle.muted,
+                          ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 25),
                       AnimatedSwitcher(
                         duration: duration,
@@ -556,6 +568,17 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
                           },
                         ),
                       ),
+                      if (!_locked && _savedDraft == null) ...[
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () => confirmLocalRemoval(
+                            context,
+                            title: 'Discard draft?',
+                            remove: _discardAfterPendingWrites,
+                          ),
+                          child: const Text('Discard draft'),
+                        ),
+                      ],
                       if (failure != null &&
                           !_submissionUncertain &&
                           !_storageBlocked) ...[
