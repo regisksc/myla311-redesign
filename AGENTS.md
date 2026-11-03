@@ -1,15 +1,17 @@
 # MyLA311
 
-The Flutter app is in `reports/`, with Git initialized at the repository root.
+MyLA311 is a Flutter mobile app for Los Angeles city services. The app is in
+`reports/`, with Git initialized at the repository root.
 iOS simulator is the default development target. Preserve local untracked
 files when switching branches.
 
-## Product
+## Product scope
 
-MyLA311 is a Flutter mobile app for Los Angeles city services. Preserve the
-existing live City integration and distinguish it from local service previews.
-Adding a new City submission type requires verified API contracts and an
-explicitly authorized real submission.
+The app covers service discovery, guided reporting journeys, saved records,
+account tools and Help. Illegal dumping has an implemented Portal client;
+other service submissions require their own verified contracts and explicit
+authorization. Preserve the distinction between City-connected functionality and
+local previews when describing or extending the app.
 
 **Done** means the native app itself performs the whole job against the real
 city system. A mock, a clipboard handoff, or opening the browser is not done.
@@ -38,8 +40,7 @@ Until step 2 exists, report Submission as **unverified**. A green
 ## Working rules
 
 - Questions the portal can answer (does an endpoint exist, what does the page
-  call) are investigated in the browser, never put to the user. Avoid unnecessary
-  clarification: the product, scope, and deliverable are stated above.
+  call) are investigated in the browser, never put to the user.
 - The user's latest correction overrides the plan until revoked. A bare
   "continue" resumes the order under Deliverable first, not the last thread.
 - Read the log or process list right before reporting status. Report what ran,

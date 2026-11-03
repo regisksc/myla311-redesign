@@ -2,42 +2,43 @@
 
 ### City services, in your pocket.
 
-MyLA311 is a Flutter mobile app for Los Angeles city services and reports.
-It guides residents from finding a location to reviewing a report, with room to
-save progress and return later.
+MyLA311 is a Flutter mobile app for Los Angeles city services. Discover the right
+service, prepare a report, save your progress and find your records again, all
+through one consistent mobile experience.
 
 **Product design and engineering by [regisksc](https://github.com/regisksc).**
 
-![MyLA311: native Home and illegal-dumping screens in the orange visual identity](docs/images/reports-cover.png)
+![MyLA311: mobile Home and city-service catalog in the orange visual identity](docs/images/reports-cover.png)
 
 *Actual native app captures with synthetic example data. Screenshots demonstrate
 the interface, not acceptance of these examples by the City.*
 
-## The problem
+## One place for the next step
 
-City reporting spans different services, questions and follow-up needs.
-MyLA311 provides a shared mobile interface for service discovery, guided report
-preparation and saved records.
+City reporting spans different services, questions and follow-up needs. MyLA311
+brings service discovery, guided report preparation and saved records into a
+shared interface, with contextual access to account tools and Help.
 
-The design centers the resident's next decision: choose the service, explain the
-problem, check the details and understand what happens next.
+The experience centers the resident's next decision: find the service, explain
+the problem, check the details and understand what happens next.
 
-## One report, six clear steps
+## Discover. Prepare. Keep track.
 
-**Location → Items → Photos → Details → Contact → Review**
+**Browse services → Prepare a report → Review → Save and follow up**
 
-Search for an address or use GPS, describe the debris, and add optional photos
-and a description. Choose anonymous or named contact, then review the report
-before the explicit City submission action. A draft retains its saved progress;
-starting over asks before replacing it.
+Browse service groups or search for a request type. Each journey presents the
+relevant information, location, evidence and contact choices before review.
+Saved Reports and local preview records retain their context, so returning to a
+draft does not mean starting from scratch. Help and account tools are available
+where they are needed.
 
 <p align="center">
-  <a href="docs/images/report-items.png"><img src="docs/images/report-items.png" width="32%" alt="Items step with debris family cards and an item search"></a>
-  <a href="docs/images/report-contact.png"><img src="docs/images/report-contact.png" width="32%" alt="Contact step offering anonymous or named reporting"></a>
-  <a href="docs/images/report-review.png"><img src="docs/images/report-review.png" width="32%" alt="Review step summarizing the report before submission"></a>
+  <a href="docs/images/services.png"><img src="docs/images/services.png" width="32%" alt="City-service catalog with search and service groups"></a>
+  <a href="docs/images/service-preview.png"><img src="docs/images/service-preview.png" width="32%" alt="Flooding report review with details and an explicit local-preview notice"></a>
+  <a href="docs/images/saved-reports.png"><img src="docs/images/saved-reports.png" width="32%" alt="Saved local report history showing a Flooding draft"></a>
 </p>
 
-*Describe the problem. Choose how to be contacted. Review before sending.
+*Find a service. Review the details. Return to saved work.
 Open an image to inspect the full-size native screen.*
 
 ## Design that makes the next step visible
@@ -63,10 +64,10 @@ Interrupted sends are kept distinct from confirmed Receipts so an uncertain
 response does not invite a duplicate submission. Existing Reports and Service
 Request numbers are preserved when preview data is cleared.
 
-## From interface reference to native app
+## A shared mobile design, built in Flutter
 
 The work connects a [canonical interactive design](design-prototype/reports-prototype-buttons-v2.html)
-to native Flutter screens and a documented Portal client. The City's guest-session
+to Flutter screens, shared Dart features and a documented Portal client. The City's guest-session
 transport, question loading, photo payload and submission contract are recorded in
 the [Portal API reference](docs/portal-api.md).
 
@@ -75,12 +76,12 @@ Comparisons drove corrections to typography, spacing, card heights, headers and
 validation visibility. Native controls, map rendering and truthful submission
 copy retain disclosed differences from the browser prototype.
 
-## What is connected today
+## Integration status
 
 **City catalog:** the shipped native app successfully reads current service names
 and groups from the City's guest portal.
 
-**Illegal dumping:** the native submission client supports location, required
+**Illegal dumping:** this service's submission client supports location, required
 debris answers, optional photos and description, contact choice, draft recovery
 and saved Receipts. Historical native-send provenance is incomplete, so a full
 native-to-City Submission remains **unverified**. No new City request was sent
@@ -111,8 +112,5 @@ Flutter commands run from `reports/`. Developer tools follow the
 and release. Override with `--dart-define=REPORTS_DEV_MODE=false` or `true`.
 The HTML reference exposes its developer playground with `?dev=1`.
 
-Project guidance lives in [AGENTS.md](AGENTS.md) and the [glossary](GLOSSARY.md).
-The project documentation records the implementation decisions
-and implementation records. See the [agent workflow](docs/agents/issue-tracker.md)
-for local issue tracking and the [Portal API reference](docs/portal-api.md)
-for the submission contract.
+Project terminology lives in the [glossary](GLOSSARY.md). See the
+[Portal API reference](docs/portal-api.md) for the current submission contract.

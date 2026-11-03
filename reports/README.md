@@ -1,9 +1,10 @@
 # MyLA311
 
-A Flutter mobile app for Los Angeles city services and reports. Illegal dumping uses the City's guest Aura API directly;
-other service journeys and account tools remain local previews. Photos
-and description are optional; location, valid debris answers and a contact choice
-are required. Contact can be anonymous or named.
+A Flutter mobile app for Los Angeles city-service discovery, guided report
+journeys and saved records. Illegal dumping uses the City's guest Aura API directly;
+other service journeys and account tools remain local previews. For
+illegal dumping, photos and description are optional; location, valid debris
+answers and a contact choice are required. Contact can be anonymous or named.
 
 The native interface follows the canonical v2 design: an orange Home, service
 catalog, six dumping steps (Location, Items, Photos, Details, Contact, Review),
