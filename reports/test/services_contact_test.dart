@@ -51,7 +51,7 @@ void main() {
     );
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(find.text('Review'), findsOneWidget);
+    expect(find.text('One last look.'), findsOneWidget);
     expect(
       (await SharedPreferences.getInstance()).getString(
         'reports_saved_contact_v1',

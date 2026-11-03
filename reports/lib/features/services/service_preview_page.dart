@@ -24,18 +24,25 @@ class ServicePreviewPage extends StatefulWidget {
 class _ServicePreviewPageState extends State<ServicePreviewPage> {
   int step = -1;
   String description = '';
+  bool extra = false;
+  String extraDetail = '';
   String address = '';
+  String reference = '';
   String firstName = '';
   String lastName = '';
   String phone = '';
   bool remember = false;
+  bool updates = true;
+  bool reviewConsent = false;
   bool contactLoaded = false;
+  bool advancing = false;
   String email = '';
   bool confirmed = false;
   bool? named;
   int photos = 0;
   String error = '';
   bool stored = true;
+  final validationErrorKey = GlobalKey();
   late final String id;
 
   @override
@@ -48,7 +55,14 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
     if (draft != null) {
       step = draft['step'] as int;
       description = draft['description'] as String? ?? '';
+      extra = draft['extra'] == true;
+      extraDetail = draft['extraDetail'] is String
+          ? draft['extraDetail'] as String
+          : '';
       address = draft['address'] as String? ?? '';
+      reference = draft['reference'] is String
+          ? draft['reference'] as String
+          : '';
       firstName = draft['firstName'] as String? ?? '';
       lastName = draft['lastName'] as String? ?? '';
       phone = draft['phone'] as String? ?? '';
@@ -56,6 +70,8 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
       confirmed = draft['confirmed'] as bool? ?? false;
       named = draft['named'] as bool?;
       photos = draft['photos'] as int? ?? 0;
+      updates = draft['updates'] != false;
+      reviewConsent = draft['reviewConsent'] == true;
     }
     loadContact();
   }
@@ -79,8 +95,21 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
   }
 
   String get evidence => widget.service['evidence'] as String;
+  String get boundary {
+    final supplied = widget.service['boundary'] ?? widget.draft?['boundary'];
+    if (supplied is String) return supplied;
+    return RegExp(
+          r'location boundary ([^;]+)',
+        ).firstMatch(evidence)?.group(1) ??
+        'Service boundary not confirmed';
+  }
+
   bool get contactRequired => evidence.contains('contact required');
   bool get accountRequired => evidence.contains('account required');
+  bool get accessKnown =>
+      evidence.contains('anonymous available') ||
+      contactRequired ||
+      accountRequired;
   bool get noPhotos => evidence.contains('no upload control');
   int? get photoLimit => int.tryParse(
     RegExp(r'advertised limit (\d+)').firstMatch(evidence)?.group(1) ?? '',
@@ -92,18 +121,26 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
       'service': widget.service['name'] as String,
       'group': widget.service['group'] as String,
       'evidence': evidence,
+      if (widget.draft?['following'] case final bool following)
+        'following': following,
       'step': step,
       'description': description,
+      'extra': extra,
+      'extraDetail': extraDetail,
       'address': address,
+      'reference': reference,
+      'boundary': boundary,
       if (named == true || contactRequired) ...{
         'firstName': firstName,
         'lastName': lastName,
         'phone': phone,
         'email': email,
+        'updates': updates,
       },
       'confirmed': confirmed,
       'named': named,
       'photos': photos,
+      'reviewConsent': reviewConsent,
     };
     stored = await const ServicePreviewStore().save(data);
     if (mounted) setState(() {});
@@ -111,9 +148,14 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
   }
 
   Future<void> advance() async {
+    if (advancing) return;
+    setState(() => advancing = true);
+    FocusManager.instance.primaryFocus?.unfocus();
     String problem = '';
     if (step == 0 && description.trim().isEmpty) {
       problem = 'Describe what needs attention.';
+    } else if (step == 0 && extra && extraDetail.trim().isEmpty) {
+      problem = 'Add the extra detail you selected.';
     }
     if (step == 1 && (!confirmed || address.trim().isEmpty)) {
       problem = 'Confirm the sample location.';
@@ -133,6 +175,9 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
             lastName.trim().isEmpty ||
             !email.contains('@'))) {
       problem = 'Enter a name and valid email.';
+    }
+    if (step == 4 && !reviewConsent) {
+      problem = 'Please confirm that this creates a local demo receipt only.';
     }
     if (problem.isEmpty &&
         step == 3 &&
@@ -154,9 +199,23 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
     }
     if (!mounted) return;
     setState(() {
+      advancing = false;
       error = problem;
       if (problem.isEmpty) step++;
     });
+    if (problem.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final errorContext = validationErrorKey.currentContext;
+        if (errorContext == null) return;
+        Scrollable.ensureVisible(
+          errorContext,
+          alignment: 1,
+          duration: MediaQuery.disableAnimationsOf(errorContext)
+              ? Duration.zero
+              : const Duration(milliseconds: 200),
+        );
+      });
+    }
     if (problem.isEmpty) save();
   }
 
@@ -168,14 +227,26 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
   }) => TextFormField(
     initialValue: initial,
     maxLines: maxLines,
-    decoration: InputDecoration(labelText: label),
+    readOnly: advancing,
+    style: const TextStyle(
+      fontSize: 16,
+      height: 1.5,
+      fontWeight: FontWeight.w600,
+    ),
+    decoration: InputDecoration(
+      labelText: label,
+      contentPadding: const EdgeInsets.all(14),
+    ),
     onChanged: (value) {
+      if (advancing) return;
       update(value);
+      reviewConsent = false;
       save();
     },
   );
 
   void backStep() {
+    if (advancing) return;
     setState(() {
       step--;
       error = '';
@@ -183,8 +254,42 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
     save();
   }
 
-  Widget heading(String text) =>
-      Text(text, style: Theme.of(context).textTheme.headlineMedium);
+  Widget heading(String text) {
+    final style = Theme.of(context).textTheme.headlineMedium;
+    return Padding(
+      padding: step >= 0 && step < 5
+          ? const EdgeInsets.only(top: 12, bottom: 8)
+          : step == -1
+          ? const EdgeInsets.only(bottom: 4)
+          : EdgeInsets.zero,
+      child: Text(
+        text,
+        style: step < 5 ? style?.copyWith(fontSize: 30, height: 1.2) : style,
+      ),
+    );
+  }
+
+  Widget reviewEntry(String label, List<String> values) =>
+      DefaultTextStyle.merge(
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.5,
+          fontWeight: FontWeight.w400,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(width: 90, child: Text(label)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [for (final value in values) Text(value)],
+              ),
+            ),
+          ],
+        ),
+      );
 
   Widget contactChoice({required bool anonymous}) {
     final selected = (contactRequired && !anonymous) || named == !anonymous;
@@ -198,7 +303,11 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            setState(() => named = !anonymous);
+            if (advancing) return;
+            setState(() {
+              named = !anonymous;
+              reviewConsent = false;
+            });
             save();
           },
           child: Container(
@@ -269,61 +378,124 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
   @override
   Widget build(BuildContext context) {
     final title = widget.service['name'] as String;
+    final canStart = accessKnown || widget.onIllegalDumping != null;
     final content = <Widget>[
       if (step == -1) ...[
-        const Text('Service information'),
-        heading(title),
-        Text(widget.service['group'] as String),
-        FilledButton(
-          onPressed: () {
-            if (accountRequired) {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const DemoSignInPage()),
-              );
-            } else if (widget.onIllegalDumping case final callback?) {
-              Navigator.of(context).pop();
-              callback();
-            } else {
-              setState(() => step = 0);
-            }
-          },
-          child: Text(
-            accountRequired
-                ? 'Explore demo sign in'
-                : widget.onIllegalDumping == null
-                ? 'Start preview'
-                : 'Start report',
+        TextButton(
+          onPressed: () => Navigator.of(context).maybePop(),
+          style: TextButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.zero,
+            textStyle: const TextStyle(fontSize: 16),
+          ),
+          child: Text('← ${widget.service['group']}'),
+        ),
+        Text(
+          'SERVICE INFORMATION',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontSize: 12,
+            height: 1.6,
+            fontWeight: FontWeight.w600,
+            letterSpacing: .72,
           ),
         ),
+        heading(title),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            widget.service['group'] as String,
+            style: const TextStyle(color: ReportsStyle.muted),
+          ),
+        ),
+        if (!canStart) ...[
+          const Text('Availability is still being confirmed.'),
+          const Text('The next steps for this service are not verified yet.'),
+        ],
+        if (canStart)
+          FilledButton(
+            onPressed: () {
+              if (accountRequired) {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const DemoSignInPage(),
+                  ),
+                );
+              } else if (widget.onIllegalDumping case final callback?) {
+                Navigator.of(context).pop();
+                callback();
+              } else {
+                setState(() => step = 0);
+              }
+            },
+            child: Text(
+              accountRequired
+                  ? 'Explore demo sign in'
+                  : widget.onIllegalDumping == null
+                  ? 'Start preview'
+                  : 'Start report',
+            ),
+          ),
       ],
       if (step == 0) ...[
         heading(title),
         Text(
           'Example questions',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontSize: 16, height: 1.6),
         ),
-        const Text(
-          'These example questions illustrate the design. The live service may ask for more details.',
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Text(
+            'These example questions illustrate the design. The live service may ask for more details.',
+          ),
         ),
         input(
-          'What needs attention?',
+          title == 'Flooding'
+              ? 'Where is water collecting?'
+              : 'What needs attention?',
           description,
           (value) => description = value,
           maxLines: 4,
         ),
+        CheckboxListTile(
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+          value: extra,
+          onChanged: (value) {
+            setState(() {
+              extra = value ?? false;
+              reviewConsent = false;
+            });
+            save();
+          },
+          title: const Text('Add a useful extra detail'),
+        ),
+        if (extra)
+          input('Extra detail', extraDetail, (value) => extraDetail = value),
       ],
       if (step == 1) ...[
         heading('Place it on the map.'),
         const Text(
           'Use an address or intersection. This sample pin stays in the preview.',
         ),
-        Card(
-          color: ReportsStyle.surface,
-          child: Semantics(
-            label: 'Illustrative location pin, not a live map',
-            child: const SizedBox(
-              height: 150,
-              child: Center(child: Icon(Icons.location_on_outlined, size: 48)),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Card(
+            color: ReportsStyle.surface,
+            child: SizedBox(
+              height: 180,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Semantics(
+                    container: true,
+                    label: 'Illustrative location pin, not a live map',
+                    child: const Icon(Icons.location_on_outlined, size: 48),
+                  ),
+                  Text(boundary, textAlign: TextAlign.center),
+                ],
+              ),
             ),
           ),
         ),
@@ -331,9 +503,17 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
           address = value;
           confirmed = false;
         }),
+        input(
+          'Nearby landmark (optional)',
+          reference,
+          (value) => reference = value,
+        ),
         OutlinedButton(
           onPressed: () {
-            setState(() => confirmed = address.trim().isNotEmpty);
+            setState(() {
+              confirmed = address.trim().isNotEmpty;
+              reviewConsent = false;
+            });
             save();
           },
           child: Text(confirmed ? 'Location confirmed' : 'Confirm sample pin'),
@@ -370,7 +550,10 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
                     onPressed: photoLimit != null && photos >= photoLimit!
                         ? null
                         : () {
-                            setState(() => photos++);
+                            setState(() {
+                              photos++;
+                              reviewConsent = false;
+                            });
                             save();
                           },
                     child: const Text('Add sample evidence'),
@@ -380,7 +563,10 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
                   Text('$photos sample evidence'),
                   TextButton(
                     onPressed: () {
-                      setState(() => photos--);
+                      setState(() {
+                        photos--;
+                        reviewConsent = false;
+                      });
                       save();
                     },
                     child: const Text('Remove sample evidence'),
@@ -392,11 +578,14 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
         ),
       ],
       if (step == 3) ...[
-        heading('Contact'),
+        heading('How should we reach you?'),
         const Text(
           'Choose how to provide contact information for this local preview.',
         ),
-        contactChoices(),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: contactChoices(),
+        ),
         if ((named == true || contactRequired) && !contactLoaded)
           const CircularProgressIndicator()
         else if (named == true || contactRequired) ...[
@@ -405,41 +594,80 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
           input('Email', email, (value) => email = value),
           input('Phone (optional)', phone, (value) => phone = value),
           CheckboxListTile(
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            value: updates,
+            onChanged: (value) {
+              if (advancing) return;
+              setState(() {
+                updates = value ?? false;
+                reviewConsent = false;
+              });
+              save();
+            },
+            title: const Text('Preview email updates'),
+            subtitle: const Text('Local preference only. No email is sent.'),
+          ),
+          CheckboxListTile(
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
             value: remember,
-            onChanged: (value) => setState(() => remember = value ?? false),
+            onChanged: (value) {
+              if (advancing) return;
+              setState(() => remember = value ?? false);
+            },
             title: const Text('Remember contact on this device'),
           ),
         ],
       ],
       if (step == 4) ...[
-        heading('Review'),
+        heading('One last look.'),
         const Text('This preview is local and will not be sent to the City.'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Details', style: Theme.of(context).textTheme.titleMedium),
-                Text(description),
-                const SizedBox(height: 16),
-                Text(
-                  'Location',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                Text(address),
-                const SizedBox(height: 16),
-                Text('Photos', style: Theme.of(context).textTheme.titleMedium),
-                Text('$photos sample evidence'),
-                const SizedBox(height: 16),
-                Text('Contact', style: Theme.of(context).textTheme.titleMedium),
-                Text(
-                  named == true || contactRequired
-                      ? '$firstName $lastName · $email${phone.isEmpty ? '' : ' · $phone'}'
-                      : 'Anonymous',
-                ),
-              ],
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final entry in [
+                    reviewEntry('Service', [title]),
+                    reviewEntry('Details', [
+                      description,
+                      if (extra) extraDetail,
+                    ]),
+                    reviewEntry('Location', [
+                      address,
+                      if (reference.isNotEmpty) reference,
+                    ]),
+                    reviewEntry('Evidence', ['$photos sample evidence']),
+                    reviewEntry('Contact', [
+                      named == true || contactRequired
+                          ? '$firstName $lastName · $email${phone.isEmpty ? '' : ' · $phone'}'
+                          : 'Anonymous',
+                    ]),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: entry,
+                    ),
+                ],
+              ),
             ),
+          ),
+        ),
+        CheckboxListTile(
+          controlAffinity: ListTileControlAffinity.leading,
+          contentPadding: EdgeInsets.zero,
+          value: reviewConsent,
+          onChanged: (value) {
+            setState(() => reviewConsent = value ?? false);
+            save();
+          },
+          title: const Text(
+            'I understand this creates a local demo receipt. Nothing is sent to the City.',
           ),
         ),
       ],
@@ -468,20 +696,43 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
           ),
         ),
       ],
-      if (error.isNotEmpty) Text(error),
+      if (error.isNotEmpty)
+        Semantics(
+          key: validationErrorKey,
+          container: true,
+          liveRegion: true,
+          child: Text(error),
+        ),
       if (!stored)
         const Text(
           'Local saving is unavailable. Your preview remains in this session.',
         ),
     ];
-    return Scaffold(
+    final page = Scaffold(
       appBar: AppBar(
         leading: step > 0 && step < 5 ? BackButton(onPressed: backStep) : null,
-        title: Text(step < 0 ? 'Services' : 'New report'),
+        titleTextStyle: step >= 0 && step < 5
+            ? const TextStyle(
+                color: ReportsStyle.ink,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              )
+            : null,
+        title: Text(step >= 0 && step < 5 ? 'New report' : 'Services'),
         actions: [
           if (step >= 0)
             TextButton(
+              style: step < 5
+                  ? TextButton.styleFrom(
+                      foregroundColor: ReportsStyle.ink,
+                      textStyle: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(fontSize: 11, fontWeight: FontWeight.w700),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      minimumSize: const Size(44, 44),
+                    )
+                  : null,
               onPressed: () async {
+                if (advancing) return;
                 final messenger = ScaffoldMessenger.of(context);
                 final saved = await save();
                 if (!context.mounted) return;
@@ -544,7 +795,13 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
                     children: [
                       for (final child in content)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
+                          padding: EdgeInsets.only(
+                            bottom: step < 5
+                                ? child is TextFormField
+                                      ? 20
+                                      : 12
+                                : 16,
+                          ),
                           child: child,
                         ),
                     ],
@@ -573,12 +830,29 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
                   ),
                 ),
                 child: FilledButton(
-                  onPressed: advance,
+                  onPressed: advancing ? null : advance,
                   child: Text(step == 4 ? 'Create local receipt' : 'Continue'),
                 ),
               ),
             )
           : null,
+    );
+    final theme = Theme.of(context);
+    return Theme(
+      data: step < 5
+          ? theme.copyWith(
+              textTheme: theme.textTheme.copyWith(
+                bodyMedium: theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 16,
+                  height: 1.6,
+                ),
+              ),
+            )
+          : theme,
+      child: PopScope<Object?>(
+        canPop: !advancing,
+        child: AbsorbPointer(absorbing: advancing, child: page),
+      ),
     );
   }
 }

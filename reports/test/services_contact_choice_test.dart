@@ -37,6 +37,6 @@ void main() {
     await tester.tap(find.text('Anonymous'));
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(find.text('Review'), findsOneWidget);
+    expect(find.text('One last look.'), findsOneWidget);
   });
 }

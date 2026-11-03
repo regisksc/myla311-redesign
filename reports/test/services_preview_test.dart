@@ -31,11 +31,26 @@ void main() {
     expect(find.text('A little more context.'), findsOneWidget);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(find.text('Contact'), findsWidgets);
+    expect(find.text('How should we reach you?'), findsOneWidget);
     await tester.tap(find.text('Anonymous'));
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(find.text('Review'), findsWidgets);
+    expect(find.text('One last look.'), findsOneWidget);
+    final consent = find.text(
+      'I understand this creates a local demo receipt. Nothing is sent to the City.',
+    );
+    await tester.scrollUntilVisible(
+      consent,
+      150,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(consent);
     await tester.tap(find.text('Create local receipt'));
     await tester.pumpAndSettle();
     expect(find.text('Local receipt'), findsOneWidget);
