@@ -60,7 +60,52 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<bool> _confirmDraftReplacement() async {
+    ReportDraft? retained;
+    try {
+      retained = await widget.store.loadDraft();
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not check your unfinished draft. Try again before starting a new report.',
+            ),
+          ),
+        );
+      }
+      return false;
+    }
+    if (!mounted) return false;
+    if (retained == null) return true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      animationStyle: MediaQuery.disableAnimationsOf(context)
+          ? AnimationStyle.noAnimation
+          : null,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Start a new report?'),
+        content: const Text(
+          'Your unfinished draft and its photos will be replaced. Save or finish the current draft if you want to keep it. Saved receipts and City requests are not removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep it'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Start new report'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
   Future<void> _openReport([ReportDraft? draft]) async {
+    if (draft == null && !await _confirmDraftReplacement()) return;
+    if (!mounted) return;
     final hero = _heroKey.currentContext?.findRenderObject();
     final scrollOffset = _homeScroll.hasClients ? _homeScroll.offset : 0.0;
     _heroBounds = hero is RenderBox && hero.hasSize
@@ -75,36 +120,37 @@ class _HomeScreenState extends State<HomeScreen> {
         store: widget.store,
         client: widget.client,
         draft: draft,
-        onAccepted: (report) =>
-            Navigator.of(context).removeRoute(route, report),
+        onAccepted: (report) {
+          setState(() {
+            _homeResume = SynchronousFuture(null);
+            _confirmationReport = report;
+            _confirmationVisible = true;
+            _delivering =
+                !_heroBounds.isEmpty &&
+                !MediaQuery.disableAnimationsOf(context);
+          });
+          if (_homeScroll.hasClients) {
+            _homeScroll.jumpTo(0);
+          }
+          Navigator.of(context).removeRoute(route, report);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final target = _heroKey.currentContext?.findRenderObject();
+            if (target is RenderBox && target.hasSize) {
+              setState(() {
+                _heroBounds = target.localToGlobal(Offset.zero) & target.size;
+              });
+            }
+          });
+        },
       ),
     );
-    final accepted = await Navigator.push<Report>(context, route);
+    await Navigator.push<Report>(context, route);
     final resume = await loadHomeResume(widget.store);
     if (mounted) {
       setState(() {
         _homeResume = SynchronousFuture(resume);
-        if (accepted != null) {
-          if (_homeScroll.hasClients) {
-            _homeScroll.jumpTo(0);
-          }
-          _confirmationReport = accepted;
-          _confirmationVisible = true;
-          _delivering =
-              !_heroBounds.isEmpty && !MediaQuery.disableAnimationsOf(context);
-        }
       });
-      if (accepted != null) {
-        await WidgetsBinding.instance.endOfFrame;
-        if (mounted) {
-          final target = _heroKey.currentContext?.findRenderObject();
-          if (target is RenderBox && target.hasSize) {
-            setState(() {
-              _heroBounds = target.localToGlobal(Offset.zero) & target.size;
-            });
-          }
-        }
-      }
     }
   }
 
@@ -228,6 +274,36 @@ class _HomeScreenState extends State<HomeScreen> {
                           FutureBuilder<HomeResume?>(
                             future: _homeResume,
                             builder: (context, snapshot) {
+                              if (snapshot.hasError) {
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 20,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Saved reports could not be loaded.',
+                                        ),
+                                        const Text(
+                                          'Try again to check for a saved draft or interrupted send.',
+                                        ),
+                                        TextButton(
+                                          onPressed: () => setState(() {
+                                            _homeResume = loadHomeResume(
+                                              widget.store,
+                                            );
+                                          }),
+                                          child: const Text('Retry'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
                               final resume = snapshot.data;
                               if (resume == null) {
                                 return const SizedBox(height: 28);
