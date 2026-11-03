@@ -9,6 +9,7 @@ import 'package:reports/design/reports_design.dart';
 import 'package:reports/features/report/domain/report.dart';
 import 'package:reports/features/report/presentation/recovery_help_page.dart';
 import 'package:reports/features/report/application/report_store.dart';
+import 'package:reports/features/report/data/portal_submission_client.dart';
 
 import '../application/home_resume.dart';
 import 'accepted_home_hero.dart';
@@ -112,6 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute<bool>(
         builder: (catalogContext) => ServiceCatalogPage(
+          loadCatalog: widget.client is PortalSubmissionClient
+              ? (widget.client as PortalSubmissionClient).loadServiceCatalog
+              : null,
           onIllegalDumping: () => Navigator.pop(catalogContext, true),
         ),
       ),

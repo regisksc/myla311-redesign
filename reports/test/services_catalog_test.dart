@@ -21,6 +21,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Illegal Dumping Item Pickup'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Start report'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Start report'));
     await tester.pumpAndSettle();
     expect(opened, isTrue);

@@ -59,6 +59,25 @@ class PortalSubmissionClient implements SubmissionClient {
 
   final http.Client? _httpClient;
 
+  Future<List<Map<String, dynamic>>> loadServiceCatalog() async {
+    final owned = _httpClient == null;
+    final client = _httpClient ?? http.Client();
+    try {
+      final portal = await _PortalSession.open(client);
+      final details = await portal.initialDetails();
+      return [
+        for (final group in _objects(details['caseConfigurationList']))
+          for (final service in _objects(group['caseConfigurations']))
+            {
+              'name': service['uxType'] as String,
+              'group': group['uxGroup'] as String,
+            },
+      ];
+    } finally {
+      if (owned) client.close();
+    }
+  }
+
   @override
   Future<SubmissionResult> send(Report report) async {
     final owned = _httpClient == null;

@@ -27,7 +27,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Animal Complaint/Violation').last);
     await tester.pumpAndSettle();
-    expect(find.text('Service information'), findsOneWidget);
+    expect(find.text('SERVICE INFORMATION'), findsOneWidget);
     expect(
       find.descendant(of: find.byType(AppBar), matching: find.text('Services')),
       findsOneWidget,

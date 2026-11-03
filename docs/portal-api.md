@@ -190,15 +190,21 @@ in the happy path).
 
 ## Endpoint 2: request types
 
-- Purpose: list request types; find the Illegal Dumping type id.
+- Purpose: read the current service catalog and find a selected request type's
+  session-specific id.
 - Label: captured, replayed.
 - Apex: `X11_H_ParentController.fetchInitialDetails`
 - `params`: none. `cacheable`: `true`. `aura.pageURI`: `/s/`.
 - `response` (object): `popularCaseList[]`, `isPortalUser`,
-  `caseConfigurationList[]` (groups with `caseConfigurations[]`). The
+  `caseConfigurationList[]` (groups with `uxGroup` and `caseConfigurations[]`). The
   Illegal Dumping tile is in `popularCaseList` and again in
   `caseConfigurationList`.
 - Pick the entry whose `uxType` is `Illegal Dumping Item Pickup`.
+- Native catalog discovery uses each grouped entry's `uxType` and its group's
+  `uxGroup`. A read-only replay on 2026-10-29 returned 14 groups. The native
+  list reads fresh names and groups without storing `caseConfigId`; other
+  service journeys remain explicitly local previews until their separate
+  City integrations are verified.
 
 Redacted example (one entry):
 

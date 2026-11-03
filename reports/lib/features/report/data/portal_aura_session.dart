@@ -42,7 +42,7 @@ class _PortalSession {
     return _PortalSession._(client, fwuid, appId);
   }
 
-  Future<String> requestTypeId() async {
+  Future<_Json> initialDetails() async {
     final envelope = await _apex(
       classname: 'X11_H_ParentController',
       method: 'fetchInitialDetails',
@@ -50,7 +50,11 @@ class _PortalSession {
       pageUri: '/s/',
       cacheable: true,
     );
-    final response = _payloadOf(_succeeded(envelope));
+    return _payloadOf(_succeeded(envelope));
+  }
+
+  Future<String> requestTypeId() async {
+    final response = await initialDetails();
     final types = [
       ..._objects(response['popularCaseList']),
       for (final group in _objects(response['caseConfigurationList']))

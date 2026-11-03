@@ -187,6 +187,13 @@ void main() {
         );
         await tester.tap(find.text('Start a report'));
         await tester.pumpAndSettle();
+        await _waitFor(
+          tester,
+          () => find
+              .widgetWithText(TextField, 'Search services')
+              .evaluate()
+              .isNotEmpty,
+        );
         await tester.enterText(
           find.widgetWithText(TextField, 'Search services'),
           'Illegal Dumping',
@@ -385,6 +392,18 @@ http.Response _syntheticPortalReply(http.Request request) {
         {
           'uxType': 'Illegal Dumping Item Pickup',
           'caseConfigId': 'synthetic-type',
+        },
+      ],
+      'caseConfigurationList': [
+        {
+          'uxGroup': 'Refuse & Collection Services',
+          'caseConfigurations': [
+            {
+              'uxType': 'Illegal Dumping Item Pickup',
+              'uxGroup': 'Refuse & Collection Services',
+              'caseConfigId': 'synthetic-type',
+            },
+          ],
         },
       ],
     },
