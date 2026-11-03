@@ -1,14 +1,22 @@
 # MyLA311
 
-A Flutter mobile app for Los Angeles city services and reports.
-Illegal dumping uses the City's guest Aura API directly. Photo is optional;
-location, description, debris location, and quantity are required.
+A Flutter mobile app for Los Angeles city services and reports. Illegal dumping uses the City's guest Aura API directly;
+other service journeys and account tools remain local previews. Photos
+and description are optional; location, valid debris answers and a contact choice
+are required. Contact can be anonymous or named.
 
-The native interface follows the Reports design: an orange home, five guided
-steps (Location, Items, Photos, Details, Review), and saved report cards with
-receipts. Mona Sans is bundled for offline use. Motion follows device settings;
-the home gear can reduce motion for the current session. Help explains anonymous
-reporting, optional photos, and safe handling of unconfirmed submissions.
+The native interface follows the canonical v2 design: an orange Home, service
+catalog, six dumping steps (Location, Items, Photos, Details, Contact, Review),
+and saved Reports with Receipts. Mona Sans is bundled for offline use. Motion
+follows device settings and the saved preference under the Home gear. Help
+includes searchable guidance, City contact information and safe handling of
+unconfirmed submissions.
+
+Other-service previews retain optional details, landmarks and local follow
+preferences. Creating a local receipt requires explicit confirmation that nothing
+is sent to the City. Preview lookup uses an exact local ID, never a City Service
+Request number. Services with unverified access requirements show information
+without a new preview action.
 
 ## Run and check
 
@@ -16,15 +24,26 @@ From this directory, with Flutter providing Dart >=3.11.4 and <4.0.0:
 
 ```sh
 flutter pub get
-flutter test --coverage test/
+flutter test --coverage --branch-coverage test/
 flutter analyze
 dart format --output=none --set-exit-if-changed lib test
-flutter run -d C4E392DE-D493-40CD-881A-2F6729C93E45
+flutter devices
 ```
 
+Select an available iOS simulator from the device list, then run
+`flutter run -d DEVICE_ID` with its ID. Use the newest compatible installed
+runtime.
+
 Offline tests replace the Portal connection and device plugins. The production
-app sends a real City request when Submit is pressed. Keep the Podfile's iOS
-15.0 deployment-target override.
+illegal-dumping flow sends a real City request when Submit is pressed. Never
+run historical live-send helpers as tests. Required coverage is 100% production
+lines and at least 80% branches, without exclusions. Keep the Podfile's iOS 15.0
+deployment-target override.
+
+The controlled native entry point at `test/support/submit_home_native_fixture.dart`
+uses the development-only Flutter driver and local report storage. Run it only
+on a dedicated QA simulator, never on a resident's installation. The shipped
+entry point remains `lib/main.dart`.
 
 ## Submission recovery
 

@@ -1,13 +1,14 @@
 # MyLA311
 
-A mobile app that lets a person report illegal dumping in Los Angeles and send
-it to the city's MyLA311 system.
+A native app for Los Angeles residents to discover MyLA311 services and report
+city problems. Illegal dumping has a City Submission client. Other service
+journeys remain local previews until their City integrations are verified.
 
 ## Language
 
 **Report**:
-The record a person creates in the app for one dumping problem: what it is,
-where it is, when, and optionally a photo. It stays on the phone with its
+The record a person creates in the app for one city problem: its request type,
+what it is, where it is, when, and optional photos. It stays on the phone with its
 delivery state and any confirmed Service Request number.
 _Avoid_: Ticket, request, case
 
@@ -37,9 +38,27 @@ number.
 _Avoid_: Service Request (the city's record), unconfirmed attempt
 
 **Illegal Dumping Pickup**:
-The one MyLA311 request type the app sends. The Submission client holds it as a
-constant, so a person never picks a type. There is no Issue Type choice.
+The MyLA311 request type currently supported by the native Submission client.
+Residents select it from the service catalog. Other type labels must never
+be sent through the illegal-dumping payload.
 _Avoid_: Issue Type, category
+
+**Request type**:
+The City's named service selected for a Report. Its verified questions,
+eligibility and Submission contract determine the native journey.
+_Avoid_: Issue Type, category
+
+**Service catalog**:
+The City's current request-type names and service groups, read through the
+guest Portal session. Discovery does not prove a type can be submitted.
+Session-encrypted identifiers are transport values, not saved type identities.
+_Avoid_: Submitted services, accepted requests
+
+**Local preview**:
+A device-only example for a service without a verified City Submission client.
+Its lookup ID identifies a local record, not a Service Request. Choosing preview
+email updates saves a local preference and sends no email.
+_Avoid_: Submitted Report, City Receipt
 
 **Portal**:
 The MyLA311 web app at myla311.lacity.gov, the city's public way to file a

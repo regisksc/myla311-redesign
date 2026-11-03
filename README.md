@@ -18,6 +18,10 @@ The live illegal-dumping flow supports drafts, photos, map search, anonymous or
 named contact, submission recovery and saved receipts. Its six steps are Location,
 Items, Photos, Details, Contact and Review. Existing drafts retain their saved
 progress, and clearing preview data preserves real submissions and receipts.
+Other-service previews retain optional details, landmarks and follow preferences
+and require explicit local-only confirmation before creating a receipt. Their
+lookup IDs identify local previews, not City Service Requests. Services whose
+access requirements are unverified show information without a new preview action.
 
 Run Flutter commands from `reports/`.
 
