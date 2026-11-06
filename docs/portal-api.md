@@ -756,6 +756,10 @@ account completion.
   councils and 15 council districts; use fresh values rather than fixed counts.
 - The guest result has `isPortalUser: true`. This metadata flag is not proof
   of login, account ownership or City authentication.
+- A fresh 07:54 UTC read on 6 November returned council option values as
+  strings `"1"` through `"15"`. The 99 neighborhood options are `{value,label}`
+  objects, with identical labels and values in that response. Preserve exact
+  values, including capitalization; do not substitute display abbreviations.
 
 ### Search: `getSearchRequests`
 
@@ -795,6 +799,17 @@ filters and the same booleans. It returned six records. A query for
 at the time of both reads, the Los Angeles date was still 5 November.
 Do not use the machine's UTC or another time zone's date as the City date.
 No radius, location or area API parameter was evidenced by these calls.
+
+Fresh reads at 07:54 UTC on 6 November used the same 5 November Barricade query.
+The unfiltered status result had eight records: five `Closed` and three
+`Workorder Created`. `requestStatus: "Closed"` returned exactly the five Closed
+records, matched using hashed identities. Literal `requestStatus: "Open"`
+returned zero, despite the three Workorder Created records. All three reads
+returned HTTP 200, Aura `SUCCESS` and `isSuccess: true`. This verifies Closed
+filtering for that sample, but does not establish the Portal's Open encoding or
+active-status grouping. Do not map the native Open label to literal `"Open"`
+without verifying the rendered Portal control. Counts are snapshots, not totals
+to hardcode; the earlier six-record result remains a separate observation.
 
 ### Detail: `getServiceRequestDetail`
 
@@ -837,6 +852,14 @@ from the response hashes stored inside them:
   `036fc956affd5818f9f8970065cabce4349ffcf773d63530989f76bd9927e39c`.
 - `nearby-bounded-read-20261106.json`:
   `4f12997cf0f57ed1e3b63bb70d987fccfcdb254a42faaede12ad78a12a9f3d81`.
+- `nearby-filter-options-20261106.json`:
+  `4f2ac2535950b33d9c540009b01db7817c315868796dc11b1668b635c3c533a4`.
+- `nearby-status-all-20261106.json`:
+  `b7eb9fed152afd93046ea142ef0b88055322a94bb8cb71f6614d61b267e3bca8`.
+- `nearby-status-open-20261106.json`:
+  `8477d2876457b8eefefc5358f163f39363dfcab9de75524d10a9a6973b7aa01c`.
+- `nearby-status-closed-20261106.json`:
+  `7cc55feb28c3e2769f69abd501291151b69de889a61655f9f8a230d9915ac8ab`.
 
 Terms-of-use caution: this is the Portal's non-public API.
 
