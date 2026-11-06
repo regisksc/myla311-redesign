@@ -4,7 +4,54 @@ import 'package:reports/features/report/application/report_store.dart';
 import 'package:reports/features/report/domain/report.dart';
 import 'package:reports/features/report/domain/submission_contract.dart';
 
+import 'support/native_app_test_support.dart';
+
 void main() {
+  test(
+    'resumed service details survive saving and a rejected attempt',
+    () async {
+      final store = MemoryReportStore();
+      final controller = ReportFlowController(
+        store: store,
+        client: _Client(),
+        draft: ReportDraft(
+          createdAt: DateTime(2026, 11, 6),
+          requestType: 'Barricade Removal',
+          serviceAnswers: {'a3Teq0000003J5XEAU': 'Street'},
+          latitude: 34,
+          longitude: -118,
+          debrisLocation: 'Curb',
+          quantity: '1',
+          flowVersion: 2,
+          contact: const ReportContact(anonymous: true),
+        ),
+      );
+      addTearDown(controller.dispose);
+      await controller.checkSavedAttempts();
+      await controller.persistDraft();
+      await controller.submit();
+      final draft = await store.loadDraft();
+      final retry = (await store.loadReports()).single;
+
+      expect(
+        {
+          'draftType': draft?.requestType,
+          'draftAnswers': draft?.serviceAnswers,
+          'retryType': retry.requestType,
+          'retryAnswers': retry.serviceAnswers,
+          'retryState': retry.state,
+        },
+        {
+          'draftType': 'Barricade Removal',
+          'draftAnswers': {'a3Teq0000003J5XEAU': 'Street'},
+          'retryType': 'Barricade Removal',
+          'retryAnswers': {'a3Teq0000003J5XEAU': 'Street'},
+          'retryState': ReportState.notSent,
+        },
+      );
+    },
+  );
+
   test(
     'named contact survives rejected attempt and remains available for retry',
     () async {

@@ -12,8 +12,10 @@ class ReportFlowController extends ChangeNotifier {
     required this.client,
     ReportDraft? draft,
     this.onAccepted,
-  }) : draftCreatedAt = draft?.createdAt ?? DateTime.now() {
+  }) : requestType = draft?.requestType ?? illegalDumpingRequestType,
+       draftCreatedAt = draft?.createdAt ?? DateTime.now() {
     if (draft != null) {
+      serviceAnswers = draft.serviceAnswers;
       description = draft.description;
       itemFamily = draft.itemFamily;
       items = List.unmodifiable(draft.items);
@@ -37,6 +39,8 @@ class ReportFlowController extends ChangeNotifier {
   final SubmissionClient client;
   final ValueChanged<Report>? onAccepted;
   final DateTime draftCreatedAt;
+  final String requestType;
+  Map<String, String> serviceAnswers = const {};
   final List<String> photoPaths = [];
   ({double latitude, double longitude})? position;
   String description = '';
@@ -207,6 +211,8 @@ class ReportFlowController extends ChangeNotifier {
     final version = ++draftSaveVersion;
     final draft = ReportDraft(
       createdAt: draftCreatedAt,
+      requestType: requestType,
+      serviceAnswers: serviceAnswers,
       description: description,
       latitude: position?.latitude,
       longitude: position?.longitude,
@@ -251,6 +257,8 @@ class ReportFlowController extends ChangeNotifier {
     await flushDraftWrites();
     if (_disposed) return;
     final attempt = Report(
+      requestType: requestType,
+      serviceAnswers: serviceAnswers,
       description: description.trim(),
       latitude: position!.latitude,
       longitude: position!.longitude,
@@ -315,6 +323,8 @@ class ReportFlowController extends ChangeNotifier {
         uncertainAttempt = submissionUncertain ? attempt : null;
         if (!submissionUncertain) {
           final draft = Report(
+            requestType: attempt.requestType,
+            serviceAnswers: attempt.serviceAnswers,
             description: attempt.description,
             latitude: attempt.latitude,
             longitude: attempt.longitude,
