@@ -121,7 +121,7 @@ void main() {
   });
 
   testWidgets(
-    'service information retains its breadcrumb, service heading',
+    'known service entry opens the journey without preliminary panels',
     (tester) async {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -131,6 +131,15 @@ void main() {
         find.text('SERVICE INFORMATION'),
       );
       expect(eyebrow.text.style?.fontSize, 12);
+      expect(find.text('Flooding'), findsOneWidget);
+      expect(find.text('Before you start'), findsNothing);
+      expect(
+        find.text('This is a local preview. No report is sent to the City.'),
+        findsNothing,
+      );
+      await tester.tap(find.text('Start report'));
+      await tester.pumpAndSettle();
+      expect(find.text('Step 1 of 6 · Details'), findsOneWidget);
     },
   );
 

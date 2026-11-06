@@ -74,13 +74,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Availability is still being confirmed.'), findsNothing);
       final account = access == 'account required';
-      expect(
-        find.text(account ? 'Explore demo sign in' : 'Start preview'),
-        findsOneWidget,
-      );
-      await tester.tap(
-        find.text(account ? 'Explore demo sign in' : 'Start preview'),
-      );
+      expect(find.text(account ? 'Continue' : 'Start report'), findsOneWidget);
+      await tester.tap(find.text(account ? 'Continue' : 'Start report'));
       await tester.pumpAndSettle();
       if (account) {
         expect(find.byType(DemoSignInPage), findsOneWidget);
@@ -120,10 +115,7 @@ void main() {
       );
       await tester.tap(find.text('Open service'));
       await tester.pumpAndSettle();
-      expect(
-        find.text('Continue to report illegal dumping to the City.'),
-        findsOneWidget,
-      );
+      expect(find.text('Before you start'), findsNothing);
       await tester.ensureVisible(find.text('Start report'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Start report'));

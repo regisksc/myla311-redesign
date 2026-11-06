@@ -15,7 +15,7 @@ void main() {
     await tester.tap(find.text('Graffiti Removal').last);
     await tester.pumpAndSettle();
     expect(find.text('Graffiti Removal'), findsWidgets);
-    await tester.tap(find.text('Start preview'));
+    await tester.tap(find.text('Start report'));
     await tester.pumpAndSettle();
     expect(find.text('Example questions'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'Graffiti on wall');

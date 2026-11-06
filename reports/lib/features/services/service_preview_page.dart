@@ -427,13 +427,7 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
                 setState(() => step = 0);
               }
             },
-            child: Text(
-              accountRequired
-                  ? 'Explore demo sign in'
-                  : widget.onIllegalDumping == null
-                  ? 'Start preview'
-                  : 'Start report',
-            ),
+            child: Text(accountRequired ? 'Continue' : 'Start report'),
           ),
       ],
       if (step == 0) ...[
