@@ -57,7 +57,9 @@ Until step 2 exists, report Submission as **unverified**. A green
   transport, bootstrap, location, questions, photo payload, and submit contract.
 - One host-side test helper recorded accepted SR C-04955177. Its original
   successful response and native UI send provenance were not preserved.
-  Corrected City read-only verification remains blocked. See tickets 04/09.
+  A City read on 2026-11-06 verified one matching Illegal Dumping Item Pickup
+  record, status Closed. The original response and native-send provenance
+  remain missing. See docs/portal-api.md and tickets 04/09.
 - Do not send another request to fill this evidence gap. Never execute the
   historical live-send helpers during tests or verification.
 
@@ -66,7 +68,9 @@ Until step 2 exists, report Submission as **unverified**. A green
 - The shipped entry point opens a native service catalog. Illegal dumping uses
   PortalSubmissionClient with photos, map search/GPS, required debris answers,
   description and an explicit anonymous or named contact choice.
-- Other service flows and account access are local previews. They do
+- Barricade Removal has a native client/UI candidate using its verified guest
+  contract. Real-send acceptance remains unverified; no live send is authorized.
+- Remaining service flows and account access are local previews. They do
   not authenticate with the City or submit requests. No browser or clipboard
   handoff remains.
 - Reports use the `reports_v2` shared_preferences shape. Preserve existing

@@ -218,10 +218,13 @@ Search results:
   `{"userSearch":"<JSON text>"}` with keys `isViewAllRequest`,
   `startDate`, `endDate`, `requestStatus`, `requestType`, `requestId`,
   `councilDistrict`, `neighbourhoodCouncilName`, `isFollowRequest`.
-  The call without `requestId` was captured. The follow-up audit called the
-  `requestId` search for C-04955177 through HTTP and the official browser;
-  neither completed successfully. Response records from the initial list carry
-  `caseDetailsObj.caseStatus` among others.
+  The call without `requestId` was captured. Earlier HTTP and browser attempts
+  to look up C-04955177 remained pending. A fresh read on 6 November 2026
+  completed after 90,666 ms and returned one City record for that number,
+  `Illegal Dumping Item Pickup`, status `Closed`. Response records carry
+  `caseDetailsObj.caseStatus` among others. This verifies the record's existence
+  and observed status, not the original successful submission response or
+  native-send provenance. Do not send another request to fill those gaps.
 - An optional email on the Submission would give the person "opens,
   closed, cancelled" emails, but it gives up anonymity. Decide with the
   person; the Portal allows both (`Request Anonymously` Yes or No).

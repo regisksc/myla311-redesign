@@ -16,8 +16,9 @@ read-only HTTP replays and one separately recorded helper submission.
 - Discovery stopped before `submitCase`. Its contract is source-derived.
   A later host-side Flutter test invoked the production client and recorded
   accepted result **C-04955177**. The original successful response envelope
-  was not retained. Native UI submission and a current City record remain
-  unverified; no further submission is authorized.
+  was not retained. A 6 November read verified that City record as **Closed**.
+  Native UI submission and the original successful response remain unverified;
+  no further submission is authorized.
 - There is no separate photo-upload endpoint. Photos travel inside the
   submit call as base64.
 
@@ -82,7 +83,9 @@ The City browser journey reached **Review & Submit** with anonymous contact,
 the location choice **Street**, no attachments, and the verified public address
 **200 N MAIN ST, LOS ANGELES, CA 90012**. The **Submit** button was not pressed.
 This verifies discovery, questions, address validation and similar-request reads.
-Barricade dispatch, server acceptance and native completion remain unverified.
+The app now has a native Barricade client/UI candidate using this contract.
+Barricade dispatch, server acceptance and native completion remain unverified;
+no live send is authorized.
 
 The retained sanitized HAR, `barricade-review.har`, contains ten Apex exchanges.
 Its SHA-256 is
@@ -712,33 +715,136 @@ Python `urllib`, honest `User-Agent`, no browser, 2026-10-21):
 
 ## Existing request verification
 
-No City mutation was performed during the follow-up audit. The original
-`search_verification.json` failed with `Input details are null`; it did not
-verify the request. The Portal actually supplies `params.userSearch` as JSON
-text to `X11_ViewServiceRequestsController.getSearchRequests`, with
-`isViewAllRequest`, `startDate`, `endDate`, `requestStatus`, `requestType`,
-`requestId`, `councilDistrict`, `neighbourhoodCouncilName`, and
-`isFollowRequest`.
+The 6 November 2026 read-only search for **C-04955177** returned exactly one
+City record: `caseNumber: "04955177"`, `caseType: "Illegal Dumping Item Pickup"`,
+`caseStatus: "Closed"`. It completed after **90,666 ms**, with HTTP 200, Aura
+`SUCCESS` and `isSuccess: true`. This clears the record-existence and observed
+status blocker. The original successful submission response and native-send
+provenance remain missing. Do not resend to resolve those gaps.
 
-The corrected HTTP search timed out. The official browser independently
-generated that request and its search also remained pending. The detail
-action requires the encrypted `caseId` from a search result; the recorded
-raw Salesforce ID returned an initialization-vector error. A nearby-open-case
-query returned no data, which does not prove the SR is absent.
+The earlier `search_verification.json` failed with `Input details are null`;
+subsequent HTTP and official-browser searches remained pending. Those attempts
+did not verify the record. The successful search uses the `userSearch` JSON-text
+contract below. Detail reads require the encrypted `caseId` returned by search;
+the earlier attempt using a raw Salesforce ID failed with an initialization-
+vector error. A zero-row nearby query does not establish that a record is absent.
 
-Current authoritative City verification is therefore blocked. Private
-read-only artifacts are in `.playwright-mcp/city-receipt-*`; the helper record
-is in `.scratch/illegal-dump-reporter/evidence/live_send/sent_record.json`.
-These files contain private/session data and are excluded from Git. No raw
-successful response was recovered from the preserved project, browser, or
-agent records. Do not resend to resolve missing evidence.
+The earlier private read artifacts remain in `.playwright-mcp/city-receipt-*`;
+the helper record remains in
+`.scratch/illegal-dump-reporter/evidence/live_send/sent_record.json`. These hold
+private/session data and are excluded from Git. The sanitized 6 November read
+evidence is indexed below. No City mutation was performed during these reads.
+
+## Public request reads (verified 6 November 2026)
+
+These are read actions on `X11_ViewServiceRequestsController`, using the common
+`POST https://myla311.lacity.gov/s/sfsites/aura` transport, form fields, guest
+bootstrap and response decoding above. Use
+`aura.pageURI: "/s/view-service-request"`. Call order is bootstrap, `intialDetails`,
+`getSearchRequests`, then `getServiceRequestDetail` with a returned encrypted ID.
+All five retained read results returned HTTP 200, Aura `SUCCESS` and Portal
+`isSuccess: true`. They establish public City reads, not native Nearby or
+account completion.
+
+### Read metadata: `intialDetails`
+
+- Method name is exactly `intialDetails`, including the spelling.
+- Parameters: `{}`.
+- Parsed Portal `response` is an object with `caseTypeList`,
+  `caseNeigborhoodCouncilName` (exact spelling), `caseCouncilDistricts` and
+  `isPortalUser`. The observed lists contained 55 service types, 99 neighborhood
+  councils and 15 council districts; use fresh values rather than fixed counts.
+- The guest result has `isPortalUser: true`. This metadata flag is not proof
+  of login, account ownership or City authentication.
+
+### Search: `getSearchRequests`
+
+`params.userSearch` is JSON **text**, not an object. Its decoded shape is:
+
+```json
+{"isViewAllRequest":true,"startDate":"<YYYY-MM-DD or empty>",
+ "endDate":"<YYYY-MM-DD or empty>","requestStatus":"",
+ "requestType":"<service type or empty>","requestId":"<SR number or empty>",
+ "councilDistrict":"","neighbourhoodCouncilName":"","isFollowRequest":false}
+```
+
+After parsing `actions[0].returnValue.returnValue`, the Portal envelope's
+`response` is the **array of rows directly**, with no collection-wrapper key:
+
+```json
+{"isSuccess":true,"message":"Success","response":[
+ {"caseDetailsObj":{"caseId":"<encrypted ID>","caseNumber":"<number>",
+  "caseType":"<service type>","caseStatus":"<status>"},"questionList":[]}
+]}
+```
+
+This is a structural example with other row fields omitted. The sanitized
+artifact's `responseKind: "object"` is JavaScript's `typeof` result for an
+array, not evidence of a JSON collection wrapper.
+
+For an exact-number lookup, the successful read used the SR number as
+`requestId` and empty strings for dates and all other filters, with
+`isViewAllRequest: true` and `isFollowRequest: false`. The search key
+`neighbourhoodCouncilName` differs from the metadata key
+`caseNeigborhoodCouncilName`.
+
+The source-exact Barricade query used `requestType: "Barricade Removal"`,
+`startDate: "2026-11-05"`, `endDate: "2026-11-05"`, empty remaining string
+filters and the same booleans. It returned six records. A query for
+`2026-11-06` returned zero with `message: "No matching service requests found"`;
+at the time of both reads, the Los Angeles date was still 5 November.
+Do not use the machine's UTC or another time zone's date as the City date.
+No radius, location or area API parameter was evidenced by these calls.
+
+### Detail: `getServiceRequestDetail`
+
+Parameters (both strings):
+
+```json
+{"caseId":"<encrypted rows[0].caseDetailsObj.caseId>","searchRequestId":""}
+```
+
+Send the **encrypted** `caseId` returned by search; do not substitute a raw
+Salesforce record ID. After the common Aura/Portal decoding, `response` is one
+object, not an array. The verified detail response has a `questionList` with
+two entries; the field is `questionList`, not `questionsLst`.
+
+Search rows and the detail response share the observed keys
+`workOrderUrlsList`, `urlsList`, `questionList`, `followRequestId`,
+`displayMapCmp`, `displayFollowButton`, `caseUrlsList`, `caseObj` and
+`caseDetailsObj`. The observed `caseObj` exposes `attributes`.
+`caseDetailsObj` contains `resolutionMessage`, `markerCreatedDate`,
+`legacyServiceRequestNumber`, `isSearchedByLegacyNumber`, `createdDate`,
+`closureComments`, `closedDate`, `caseType`, `caseStreetAddress`, `caseStatus`,
+`caseNumberWithPrefix`, `caseNumber`, `caseLongitude`, `caseLatitude`, `caseId`
+and `caseAddress`. Names establish the response schema, not permission to
+publish real addresses, contact data, session values or encrypted IDs.
+
+### Retained read evidence
+
+Sanitized artifacts reside in
+`.scratch/portal-mobile-parity/evidence/barricade-contract-20261105/`.
+The following are SHA-256 hashes of the sanitized files themselves, distinct
+from the response hashes stored inside them:
+
+- `nearby-initial-read-20261106.json`:
+  `eb3017f7616f278b2f26f8cc586d7b5bd79d40be10a05a8a1fe9917b78d466ec`.
+- `nearby-historical-read-20261106.json`:
+  `d1392b459b6907d1584c92c751468f7fe52fb41ae8bfc74e10a4db3fd82c4b1b`.
+- `nearby-la-day-read-20261106.json`:
+  `076516f03f0bf09ac7ae1d164df333901dbe9f06e4d2670022bfbfb66d31cfc7`.
+- `nearby-detail-read-20261106.json`:
+  `036fc956affd5818f9f8970065cabce4349ffcf773d63530989f76bd9927e39c`.
+- `nearby-bounded-read-20261106.json`:
+  `4f12997cf0f57ed1e3b63bb70d987fccfcdb254a42faaede12ad78a12a9f3d81`.
 
 Terms-of-use caution: this is the Portal's non-public API.
 
 ## Unknowns
 
-- Original successful `submitCase` request/response, native-send provenance,
-  and current authoritative verification of C-04955177. Exact types of
+- Original successful `submitCase` request/response and native-send provenance.
+  The 6 November City read verifies C-04955177's existence and observed Closed
+  status only. Exact types of
   `NumberIncrement` and `MultiPicklist` answers (source implies a string
   for numbers and `;`-joined text for multi-select).
 - Whether the server requires `Google_Address__c`, `Access_Source__c` and
