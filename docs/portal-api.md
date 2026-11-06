@@ -155,6 +155,51 @@ must carry Barricade's own configuration, answers and validated address;
 the existing dumping answer builder cannot be reused unchanged. No captured
 Barricade submit payload or accepted Service Request response is available yet.
 
+### Current shared submit preparation (source recovered 6 November 2026)
+
+The public Aura module loader returned HTTP 200 with 1,069,816 bytes, retained at
+`.scratch/portal-mobile-parity/evidence/barricade-contract-20261105/portal-modules-20261106.js`.
+SHA-256: `2eef1b3ab43820f6fee390aad2f6b2d29de6cdbac9725d5254191ca687faba5b`.
+To locate the current loader, discover the `bootstrap.js` script URL from
+`GET https://myla311.lacity.gov/s/`, then read `pageLoaderCmpDefBaseUri`
+from that script's configuration. Use the
+component-definition GET with `_def=markup://c:laCaseCreationFlow`; do not
+assume the bootstrap script lives at `/s/bootstrap.js` (that URL returned
+HTTP 404 on 6 November 2026). The response's `initModuleDefs` JSON
+contains `co` source strings for `c/laRiDetails` and `c/laCaseCreationFlow`.
+This is Portal source evidence, not a captured submit request.
+
+For the captured non-SNC Barricade journey, these shared functions prepare the
+request in this order:
+
+1. `c/laRiDetails.handleContinue()` reads each question control's value into
+   `sAnswer`, validates questions, uploads and the map, and builds the Case from
+   the current configuration's origin, priority, status, web visibility and
+   service type. Location starts with map values; a successful locator overrides
+   the street, city, postal code and coordinates. It carries locator status and
+   the Google-formatted boundary address. It sorts a copy of `lstCaseQuestion`
+   ascending by `(iOrder || 0)` before passing details and map provenance to the
+   parent flow.
+2. `c/laCaseCreationFlow.submitRequest()` adds client, session and address-entry
+   metadata and sets `Origin: "Self Service"` for Portal users. It removes
+   `dwpContainerLst`, filters questions whose `sFieldtoUpdate` is `null` or
+   `undefined`, then floors only numeric, non-integer `iOrder` values. It does
+   not sort again after flooring.
+3. It copies `contactWrapperResponse` and merges non-null, non-undefined,
+   non-empty `sFirstName`, `sLastName`, `sEmail`, `sPhone`, `sExtension` and
+   `isAnonymously` values. Explicit `isAnonymously: false` is preserved;
+   an undefined anonymity value defaults to `false`.
+4. It calls `X11_RI_ParentController.submitCase` with the endpoint 6 wrapper:
+   `sObjCase` is an object; `sObjContact`, `sCaseQuestionJSON` and `sFileLinks`
+   are JSON text; `isSNC` is `false`. Each ordered attachment retains its
+   metadata while `fileData` becomes the portion after `base64,`.
+   `addressDetails` is JSON text of `locatorResponse.locatorDetails` only when
+   that object is present.
+
+These source functions establish the shared preparation contract. They do not
+verify Barricade dispatch, City acceptance or native completion. No City write
+was performed during this source recovery.
+
 ## Platform
 
 The Portal is a Salesforce Experience Cloud (Aura/LWC) site. There is no
@@ -475,8 +520,8 @@ Redacted question example:
   `Zipcode__c` = `Postal`, `Geolocation__Longitude__s` = `X`,
   `Geolocation__Latitude__s` = `Y`, `State__c` = `CA`,
   `Country__c` = `US`.
-- `Address_Status__c`: the envelope `message` of the lookup
-  (`Locator Success`; `Locator Is-Down` if the locator failed).
+- `Address_Status__c`: `locatorResponse.locatorStatus`, falling back to the
+  Portal's `LOCATORISDOWN` constant when absent.
 - `Google_Address__c`: for `City Boundary` the Google-formatted address
   string from the map. The app has no Google address; whether the server
   requires it is unknown (see Unknowns).
@@ -492,8 +537,9 @@ Redacted question example:
   `CCB_SA_Types__c` (`""` for this type).
 
 `sObjContact` is `JSON.stringify` of the contact object:
-`contactWrapperResponse` from endpoint 3, with `isAnonymously` set to
-`true` for an anonymous request. Example:
+`contactWrapperResponse` from endpoint 3, merged with the selected contact
+values as described above. `isAnonymously` is `true` for an anonymous request;
+explicit `false` is preserved for a named request. Example:
 
 ```json
 {"sUserName":"<guest user>","sSuite":null,"sStreet":null,"sState":null,
@@ -504,10 +550,13 @@ Redacted question example:
 ```
 
 `sCaseQuestionJSON` is `JSON.stringify` of `objCaseConfigWrapper` from
-endpoint 3 **without `dwpContainerLst`**, where `lstCaseQuestion` keeps
-only items whose `sFieldtoUpdate` is not null, each `iOrder` floored to an
-integer, sorted by `iOrder`, and `sAnswer` (and `sDisplay`) filled in. The
-browser sends all 210 questions, answered or not.
+endpoint 3 **without `dwpContainerLst`**. The details component first fills
+`sAnswer` (and maintains `sDisplay`) and sorts questions ascending by
+`(iOrder || 0)`. The parent submit function then keeps only items whose
+`sFieldtoUpdate` is neither null nor undefined and floors numeric, non-integer
+`iOrder` values, without re-sorting. Unanswered questions with field mappings
+remain in the array; the earlier dumping configuration contained 210 questions,
+which is not a fixed count for Barricade or future configurations.
 
 `sFileLinks` is `JSON.stringify` of an array, one object per photo:
 
@@ -520,8 +569,9 @@ browser sends all 210 questions, answered or not.
 `position` is `null` when the image has no EXIF GPS; `dateTime` is only
 present when EXIF has it. `[]` means no photos.
 
-`addressDetails` is `JSON.stringify(locatorDetails)`, the `address` object
-(4a) or `candidates[0].attributes` (4b).
+`addressDetails` is included only when `locatorResponse.locatorDetails` is
+present, as `JSON.stringify(locatorDetails)`: the `address` object (4a) or
+`candidates[0].attributes` (4b).
 
 Response (from source): `returnValue.returnValue` parses to the envelope:
 
@@ -726,8 +776,9 @@ Each id is the filename prefix: `<id>-*.json`.
   `validateOriginalAddress`, `H06` `getRelatedCaseLst`, `H07`
   `fetchInitialDetails` with no cookies, `H08` `fetchInitialDetails` with
   a made-up `fwuid`.
-- Portal JavaScript used for the "from source" parts (unescaped LWC
-  bundle for the report-issue page):
-  `/private/tmp/claude-501/-Users-regiskian-Git-reports/1db0d6d5-e0e6-4607-abe3-13197d0bcd92/scratchpad/bundle-reportissue.unescaped.js`
-  (components `c/laCaseCreationFlow`, `c/laFileUpload`, `c/laGoogleMap`,
-  `c/laRiContactInformation`, `c/sessionStorage`).
+- The original October source reference was an unescaped report-issue LWC
+  bundle in temporary storage. For current shared details/submit preparation,
+  use the retained 6 November module-loader response and SHA-256 recorded in
+  the Barricade source section above. That response includes
+  `c/laRiDetails.handleContinue()` and `c/laCaseCreationFlow.submitRequest()`;
+  it does not supply a successful City submit transaction.
