@@ -426,7 +426,7 @@ void main() {
           appId: 'private',
           caseTypeId: 'fixture',
           requestCount: 0,
-          config: const {},
+          config: const {'sCaseType': 'Illegal Dumping Item Pickup'},
           contact: const {},
           address: const {},
           addressStatus: 'Locator Success',

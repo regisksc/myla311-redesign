@@ -53,22 +53,19 @@ class _PortalSession {
     return _payloadOf(_succeeded(envelope));
   }
 
-  Future<String> requestTypeId() async {
+  Future<String> requestTypeId(String requestType) async {
     final response = await initialDetails();
     final types = [
       ..._objects(response['popularCaseList']),
       for (final group in _objects(response['caseConfigurationList']))
         ..._objects(group['caseConfigurations']),
     ];
-    final matches = types.where(
-      (type) =>
-          type['uxType'] == PortalSubmissionClient.illegalDumpingRequestType,
-    );
+    final matches = types.where((type) => type['uxType'] == requestType);
     final id = matches.isEmpty ? null : matches.first['caseConfigId'];
     if (id is! String || id.isEmpty) {
-      throw const _Failure(
+      throw _Failure(
         SubmissionFailureKind.rejected,
-        'The Portal does not list Illegal Dumping Item Pickup.',
+        'The Portal does not list $requestType.',
       );
     }
     return id;

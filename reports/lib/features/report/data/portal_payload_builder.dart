@@ -9,17 +9,21 @@ _Json _preparedParams(
   List<_Json> photoLinks,
   IllegalDumpingCatalog? itemCatalog,
 ) {
+  final barricade =
+      report.requestType == PortalSubmissionClient.barricadeRemovalRequestType;
   final answers = {
-    if (itemCatalog == null) ...{
+    if (!barricade && itemCatalog == null) ...{
       'Provide_Information_On_Suspect__c': 'No',
       'Illegally_Dumped_Item_Type__c': "I'm not sure",
       'Illegally_Dumped_Pickup_Options__c': 'Loose/Miscellaneous Debris',
       'Location_of_Loose_Miscellaneous_Debris__c': report.debrisLocation!,
       'No_of_Loose_Miscellaneous_Debris__c': '${report.quantity}',
     },
-    if (itemCatalog == null) 'Description': report.description,
+    if (!barricade && itemCatalog == null) 'Description': report.description,
   };
-  final selected = itemCatalog == null
+  final selected = barricade
+      ? _barricadeAnswers(report, config)
+      : itemCatalog == null
       ? <String, String>{}
       : _selectedAnswers(report, itemCatalog, config);
   return {
@@ -39,6 +43,97 @@ _Json _preparedParams(
     'isSNC': false,
     'addressDetails': jsonEncode(address),
   };
+}
+
+Map<String, String> _barricadeAnswers(Report report, _Json config) {
+  const changed = _Failure(
+    SubmissionFailureKind.rejected,
+    'City Barricade questions changed or answers are invalid. No request was sent.',
+  );
+  final questions = _objects(
+    config['lstCaseQuestion'],
+  ).where((question) => question['sFieldtoUpdate'] != null).toList();
+  if (config['sCaseType'] !=
+          PortalSubmissionClient.barricadeRemovalRequestType ||
+      questions.length != 3 ||
+      _objects(config['lstBeforeCaseQuestion']).isNotEmpty) {
+    throw changed;
+  }
+  final ids = <String>{};
+  for (final question in questions) {
+    final id = question['sQuestionId'];
+    if (id is! String ||
+        id.isEmpty ||
+        !ids.add(id) ||
+        question['sParentQuestionId'] != null ||
+        question['sQuestionParentConfigId'] != null ||
+        question['sHidden'] == true ||
+        question['sReadOnly'] == true ||
+        question['sAnswer'] != '' ||
+        (question['sDefaultValue'] != null &&
+            question['sDefaultValue'] != '')) {
+      throw changed;
+    }
+  }
+  _Json requireQuestion(
+    String field,
+    String type,
+    bool required,
+    List<String> options,
+  ) {
+    final matches = questions.where(
+      (question) => question['sFieldtoUpdate'] == field,
+    );
+    if (matches.length != 1) throw changed;
+    final question = matches.single;
+    final actual = _objects(
+      question['lstOptions'],
+    ).map((option) => option['value']).where((value) => value != '').toSet();
+    if (question['sQuestionType'] != type ||
+        question['brequired'] != required ||
+        actual.length != options.length ||
+        !actual.containsAll(options)) {
+      throw changed;
+    }
+    return question;
+  }
+
+  final location = requireQuestion('Problem_Type__c', 'Picklist', true, [
+    'Alley',
+    'Sidewalk',
+    'Street',
+  ]);
+  final description = requireQuestion('Description', 'TextArea', false, []);
+  final ada = requireQuestion('ADA_Question__c', 'Picklist', false, [
+    'Decline to Answer',
+    'No',
+    'Yes',
+  ]);
+  if (!_objects(
+    description['lstValidations'],
+  ).any((validation) => validation['maximumLimit'] == '750')) {
+    throw changed;
+  }
+  final selectable = {location['sQuestionId'], ada['sQuestionId']};
+  if (report.serviceAnswers.keys.any((id) => !selectable.contains(id))) {
+    throw changed;
+  }
+  final answers = <String, String>{...report.serviceAnswers};
+  for (final question in [location, ada]) {
+    final answer = answers[question['sQuestionId']];
+    if (answer == null || answer.isEmpty) {
+      if (question['brequired'] == true) throw changed;
+      answers.remove(question['sQuestionId']);
+    } else if (!_objects(
+      question['lstOptions'],
+    ).any((option) => option['value'] == answer)) {
+      throw changed;
+    }
+  }
+  if (report.description.isNotEmpty) {
+    answers[description['sQuestionId'] as String] = report.description;
+  }
+  return answers;
 }
 
 Map<String, String> _selectedAnswers(
@@ -171,10 +266,15 @@ _Json _questionConfig(
   Map<String, String> answers,
   Map<String, String> selected,
 ) {
+  final ordered = [..._objects(config['lstCaseQuestion'])]
+    ..sort(
+      (a, b) =>
+          ((a['iOrder'] as num?) ?? 0).compareTo((b['iOrder'] as num?) ?? 0),
+    );
   final questions = [
-    for (final item in _objects(config['lstCaseQuestion']))
+    for (final item in ordered)
       if (item['sFieldtoUpdate'] != null) _answered(item, answers, selected),
-  ]..sort((a, b) => (a['iOrder'] as int).compareTo(b['iOrder'] as int));
+  ];
   final copy = {...config}..remove('dwpContainerLst');
   copy['lstCaseQuestion'] = questions;
   return copy;

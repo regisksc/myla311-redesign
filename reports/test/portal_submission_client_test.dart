@@ -817,6 +817,151 @@ void main() {
     });
 
     test(
+      'Barricade sends only with fresh independent service configuration',
+      () async {
+        final details = _caseTypeDetails();
+        details['objCaseConfigWrapper'] = {
+          'sCaseType': 'Barricade Removal',
+          'sCaseCategory': 'Street Problems/Repairs',
+          'sCasePriority': 'Normal',
+          'sCaseDefaultStatus': 'New',
+          'sImageCount': 5,
+          'dwpContainerLst': null,
+          'lstBeforeCaseQuestion': <Object>[],
+          'lstCaseQuestion': [
+            {
+              ..._question('ADA_Question__c', 2.9, 'Picklist', display: true),
+              'sQuestionId': 'a3Teq0000003J5kEAE',
+              'lstOptions': [
+                {'value': ''},
+                {'value': 'Decline to Answer'},
+                {'value': 'No'},
+                {'value': 'Yes'},
+              ],
+            },
+            {
+              ..._question('Description', 2.1, 'TextArea', display: true),
+              'sQuestionId': 'a3Teq0000003J4nEAE',
+              'lstValidations': [
+                {'maximumLimit': '750', 'required': false},
+              ],
+            },
+            {
+              ..._question('Problem_Type__c', 1, 'Picklist', display: true),
+              'sQuestionId': 'a3Teq0000003J5XEAU',
+              'sParentAnswer': 'Barricade Removal',
+              'brequired': true,
+              'lstOptions': [
+                {'value': ''},
+                {'value': 'Alley'},
+                {'value': 'Sidewalk'},
+                {'value': 'Street'},
+              ],
+            },
+            _question(null, 0, 'Section'),
+          ],
+        };
+        final replies = _happyReplies()
+          ..['fetchCaseTypeDetails'] = _envelope(
+            isSuccess: true,
+            response: details,
+          );
+        final portal = _FakePortal(replies);
+        final client = PortalSubmissionClient(httpClient: portal.client);
+        final report = Report(
+          requestType: 'Barricade Removal',
+          serviceAnswers: const {'a3Teq0000003J5XEAU': 'Street'},
+          description: 'Unused barricade in the street.',
+          contact: const ReportContact(anonymous: true),
+          latitude: 34.054047,
+          longitude: -118.24317,
+          createdAt: DateTime.utc(2026, 11, 6),
+        );
+        for (final id in [
+          'first%2Fcatalog%2Bid%3D',
+          'second%2Fcatalog%2Bid%3D',
+        ]) {
+          replies['fetchInitialDetails'] = _envelope(
+            isSuccess: true,
+            response: {
+              ..._requestTypes(),
+              'caseConfigurationList': [
+                {
+                  'uxGroup': 'Street Problems/Repairs',
+                  'caseConfigurations': [
+                    {'uxType': 'Barricade Removal', 'caseConfigId': id},
+                  ],
+                },
+              ],
+            },
+          );
+          portal.calls.clear();
+          final result = await client.send(report);
+          expect(
+            result,
+            isA<SubmissionAccepted>().having(
+              (result) => result.serviceRequestNumber,
+              'serviceRequestNumber',
+              'SR-FIXTURE-0001',
+            ),
+          );
+          expect(
+            portal.callTo('fetchCaseTypeDetails').params['caseTypeId'],
+            Uri.decodeComponent(id),
+          );
+          expect(
+            portal.callTo('submitCase').pageUri,
+            '/s/report-issue?c__IssueTypeId=$id&c__IsPortalUser=true',
+          );
+          final params = portal.callTo('submitCase').params;
+          expect((params['sObjCase'] as Map)['Type'], 'Barricade Removal');
+          expect(
+            (params['sObjCase'] as Map)['Street_Address__c'],
+            '200 N SPRING ST',
+          );
+          expect(
+            (jsonDecode(params['sObjContact'] as String)
+                as Map)['isAnonymously'],
+            true,
+          );
+          final wrapper =
+              jsonDecode(params['sCaseQuestionJSON'] as String) as Map;
+          expect(wrapper['sCaseType'], 'Barricade Removal');
+          expect(wrapper.containsKey('dwpContainerLst'), false);
+          final questions = (wrapper['lstCaseQuestion'] as List).cast<Map>();
+          expect(questions.map((question) => question['sQuestionId']), [
+            'a3Teq0000003J5XEAU',
+            'a3Teq0000003J4nEAE',
+            'a3Teq0000003J5kEAE',
+          ]);
+          expect(questions.map((question) => question['iOrder']), [1, 2, 2]);
+          expect(questions.map((question) => question['sAnswer']), [
+            'Street',
+            'Unused barricade in the street.',
+            '',
+          ]);
+          expect(jsonDecode(params['sFileLinks'] as String), isEmpty);
+        }
+        final config = details['objCaseConfigWrapper'] as Map;
+        final questions = (config['lstCaseQuestion'] as List).cast<Map>();
+        questions.first['sQuestionParentConfigId'] = 'new-dependent-config';
+        portal.calls.clear();
+        expect(
+          await client.send(report),
+          isA<SubmissionFailed>().having(
+            (result) => result.kind,
+            'kind',
+            SubmissionFailureKind.rejected,
+          ),
+        );
+        expect(
+          portal.calls.where((call) => call.method == 'submitCase'),
+          isEmpty,
+        );
+      },
+    );
+
+    test(
       'happy path returns the Service Request number from submitCase',
       () async {
         final portal = _FakePortal(_happyReplies());

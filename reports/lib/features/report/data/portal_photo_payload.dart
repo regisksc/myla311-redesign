@@ -3,7 +3,9 @@ part of 'portal_submission_client.dart';
 Future<List<_Json>> _validatedPhotos(Report report) async {
   final location = report.debrisLocation;
   final quantity = report.quantity;
-  if (report.itemFamily == null && (location == null || quantity == null)) {
+  if (report.requestType == PortalSubmissionClient.illegalDumpingRequestType &&
+      report.itemFamily == null &&
+      (location == null || quantity == null)) {
     throw const _Failure(
       SubmissionFailureKind.rejected,
       'Missing debris details',
@@ -15,14 +17,19 @@ Future<List<_Json>> _validatedPhotos(Report report) async {
       'Description must be $_maxDescriptionLength characters or fewer.',
     );
   }
-  return _photoLinks(report.photoPaths);
+  return _photoLinks(
+    report.photoPaths,
+    report.requestType == PortalSubmissionClient.barricadeRemovalRequestType
+        ? 5
+        : 3,
+  );
 }
 
-Future<List<_Json>> _photoLinks(List<String> paths) async {
-  if (paths.length > 3) {
-    throw const _Failure(
+Future<List<_Json>> _photoLinks(List<String> paths, int maximum) async {
+  if (paths.length > maximum) {
+    throw _Failure(
       SubmissionFailureKind.rejected,
-      'A report can include up to 3 photos. Remove extra photos before sending.',
+      'A report can include up to $maximum photos. Remove extra photos before sending.',
     );
   }
   final links = <_Json>[];

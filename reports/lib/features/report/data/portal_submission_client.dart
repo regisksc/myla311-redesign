@@ -56,6 +56,7 @@ class PortalSubmissionClient implements SubmissionClient {
   PortalSubmissionClient({http.Client? httpClient}) : _httpClient = httpClient;
 
   static const illegalDumpingRequestType = 'Illegal Dumping Item Pickup';
+  static const barricadeRemovalRequestType = 'Barricade Removal';
 
   final http.Client? _httpClient;
 
@@ -94,16 +95,36 @@ class PortalSubmissionClient implements SubmissionClient {
   }
 
   Future<SubmissionResult> _submit(http.Client client, Report report) async {
-    final itemCatalog = await _validatedItemCatalog(report);
+    if (report.requestType != illegalDumpingRequestType &&
+        report.requestType != barricadeRemovalRequestType) {
+      throw const _Failure(
+        SubmissionFailureKind.rejected,
+        'This City service is not supported. No request was sent.',
+      );
+    }
+    final itemCatalog = report.requestType == illegalDumpingRequestType
+        ? await _validatedItemCatalog(report)
+        : null;
     final photoLinks = await _validatedPhotos(report);
 
     final portal = await _PortalSession.open(client);
-    final caseTypeId = Uri.decodeComponent(await portal.requestTypeId());
+    final caseTypeId = Uri.decodeComponent(
+      await portal.requestTypeId(report.requestType),
+    );
     final issuePage =
         '/s/report-issue?c__IssueTypeId=${Uri.encodeComponent(caseTypeId)}'
         '&c__IsPortalUser=true';
     final caseType = await portal.caseTypeDetails(caseTypeId, issuePage);
     final config = _map(caseType['objCaseConfigWrapper']);
+    if (config['sCaseType'] != report.requestType) {
+      throw const _Failure(
+        SubmissionFailureKind.rejected,
+        'City service configuration changed. No request was sent.',
+      );
+    }
+    if (report.requestType == barricadeRemovalRequestType) {
+      _barricadeAnswers(report, config);
+    }
     final contact = _map(caseType['contactWrapperResponse']);
     final lookup = await portal.locate(
       report.latitude,
@@ -137,6 +158,13 @@ class PortalSubmissionClient implements SubmissionClient {
     required String addressStatus,
   }) async {
     try {
+      if (report.requestType != illegalDumpingRequestType ||
+          config['sCaseType'] != illegalDumpingRequestType) {
+        throw const _Failure(
+          SubmissionFailureKind.rejected,
+          'The inspector supports only Illegal Dumping Item Pickup.',
+        );
+      }
       final itemCatalog = await _validatedItemCatalog(report);
       final photos = await _validatedPhotos(report);
       final params = _preparedParams(
