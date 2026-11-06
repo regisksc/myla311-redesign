@@ -110,8 +110,11 @@ class Report {
     this.contact,
     this.itemFamily,
     List<ReportItem> items = const [],
+    this.requestType = illegalDumpingRequestType,
+    Map<String, String> serviceAnswers = const {},
   }) : photoPaths = List.unmodifiable(photoPaths ?? [?photoPath]),
-       items = List.unmodifiable(items);
+       items = List.unmodifiable(items),
+       serviceAnswers = Map.unmodifiable(serviceAnswers);
 
   final String description;
   final double latitude;
@@ -123,6 +126,8 @@ class Report {
   final int? quantity;
   final ReportState state;
   final String? serviceRequestNumber;
+  final String requestType;
+  final Map<String, String> serviceAnswers;
   final ReportContact? contact;
   final String? itemFamily;
   final List<ReportItem> items;
@@ -138,6 +143,8 @@ class Report {
     'quantity': quantity,
     'state': state.name,
     'serviceRequestNumber': serviceRequestNumber,
+    if (requestType != illegalDumpingRequestType) 'requestType': requestType,
+    if (serviceAnswers.isNotEmpty) 'serviceAnswers': serviceAnswers,
     if (contact != null) 'contact': contact!.toJson(),
     if (itemFamily != null) 'itemFamily': itemFamily,
     if (items.isNotEmpty) 'items': items.map((item) => item.toJson()).toList(),
@@ -153,6 +160,8 @@ class Report {
     quantity: quantity,
     state: ReportState.submitted,
     serviceRequestNumber: serviceRequestNumber,
+    requestType: requestType,
+    serviceAnswers: serviceAnswers,
     contact: contact,
     itemFamily: itemFamily,
     items: items,
@@ -168,6 +177,9 @@ class Report {
     debrisLocation: json['debrisLocation'] as String?,
     quantity: (json['quantity'] as num?)?.toInt(),
     state: ReportState.values.byName(json['state'] as String),
+    requestType: json['requestType'] as String? ?? illegalDumpingRequestType,
+    serviceAnswers: (json['serviceAnswers'] as Map? ?? {})
+        .cast<String, String>(),
     serviceRequestNumber: json['serviceRequestNumber'] as String?,
     itemFamily: json['itemFamily'] as String?,
     items: (json['items'] as List? ?? [])

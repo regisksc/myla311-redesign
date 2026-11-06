@@ -62,6 +62,41 @@ void main() {
     });
   });
 
+  test('a recovered City receipt retains its service and answers', () async {
+    final fields = {
+      ..._fields,
+      'description': 'Barricade left in the street',
+      'photoPath': null,
+      'debrisLocation': null,
+      'quantity': null,
+      'requestType': 'Barricade Removal',
+      'serviceAnswers': {'a3Teq0000003J5XEAU': 'Street'},
+    };
+    await testStore.saveReport(
+      Report.fromJson({...fields, 'state': 'submissionUncertain'}),
+    );
+    SharedPreferences.setMockInitialValues({});
+    final recovered = (await testStore.loadReports()).single;
+
+    await testStore.replaceReport(
+      recovered,
+      recovered.submittedWith('SR-SYNTHETIC-BARRICADE'),
+    );
+    final receipt = (await testStore.loadReports()).single;
+
+    expect(
+      [recovered.toJson(), receipt.toJson()],
+      [
+        {...fields, 'state': 'submissionUncertain'},
+        {
+          ...fields,
+          'state': 'submitted',
+          'serviceRequestNumber': 'SR-SYNTHETIC-BARRICADE',
+        },
+      ],
+    );
+  });
+
   test(
     'local removal preserves uncertain markers and stale actions cannot clear them',
     () async {
