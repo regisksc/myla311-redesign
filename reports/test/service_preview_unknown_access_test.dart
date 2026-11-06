@@ -103,7 +103,7 @@ void main() {
                         'group': 'Other',
                         'evidence': '',
                       },
-                      onIllegalDumping: () => starts++,
+                      onStartReport: () => starts++,
                     ),
                   ),
                 ),

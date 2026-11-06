@@ -49,6 +49,68 @@ void main() {
   });
 
   testWidgets(
+    'Barricade Removal uses native questions and retains its City receipt',
+    (tester) async {
+      await _openReport(
+        tester,
+        _SequenceClient([SubmissionAccepted('SR-SYNTHETIC-BARRICADE')]),
+        requestType: 'Barricade Removal',
+      );
+      await tester.tap(find.text('Use my location'));
+      await tester.pumpAndSettle();
+      await _continue(tester);
+      expect(find.text('Loose / miscellaneous debris'), findsNothing);
+      final location = find.byKey(const Key('barricade-location'));
+      await tester.tap(location);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Street').last);
+      await tester.pumpAndSettle();
+      await _continue(tester);
+      await tester.tap(find.text('Skip photo'));
+      await tester.pumpAndSettle();
+      await _continue(tester);
+      await tester.tap(find.text('Without contact details'));
+      await tester.pumpAndSettle();
+      await _continue(tester);
+      expect(find.text('Street'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Submit'));
+      await _waitFor(
+        tester,
+        () => find.text('SR-SYNTHETIC-BARRICADE').evaluate().isNotEmpty,
+      );
+      final stored = (await tester.runAsync(testStore.loadReports))!.single;
+      expect(
+        {
+          'type': stored.requestType,
+          'answers': stored.serviceAnswers,
+          'items': stored.items,
+          'quantity': stored.quantity,
+          'debris': stored.debrisLocation,
+          'state': stored.state,
+          'number': stored.serviceRequestNumber,
+        },
+        {
+          'type': 'Barricade Removal',
+          'answers': {'a3Teq0000003J5XEAU': 'Street'},
+          'items': <ReportItem>[],
+          'quantity': null,
+          'debris': null,
+          'state': ReportState.submitted,
+          'number': 'SR-SYNTHETIC-BARRICADE',
+        },
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('View saved reports'));
+      await tester.tap(find.text('View saved reports'));
+      await _waitFor(
+        tester,
+        () => find.text('Barricade Removal').evaluate().isNotEmpty,
+      );
+      expect(find.text('Illegal dumping'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'the native form saves an attempt before sending and shows its receipt',
     (tester) async {
       final reply = Completer<SubmissionResult>();
@@ -302,7 +364,11 @@ void main() {
   }
 }
 
-Future<void> _openReport(WidgetTester tester, SubmissionClient client) async {
+Future<void> _openReport(
+  WidgetTester tester,
+  SubmissionClient client, {
+  String requestType = 'Illegal Dumping Item Pickup',
+}) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(800, 2000);
   addTearDown(tester.view.resetPhysicalSize);
@@ -311,11 +377,14 @@ Future<void> _openReport(WidgetTester tester, SubmissionClient client) async {
     () => rootBundle.loadString('assets/service_catalog.json'),
   );
   await tester.pumpWidget(ReportApp(client: client));
-  await _openFromCatalog(tester);
+  await _openFromCatalog(tester, requestType: requestType);
   await _waitFor(
     tester,
     () =>
-        find.text('Where did you spot it?').evaluate().isNotEmpty &&
+        find
+            .widgetWithText(OutlinedButton, 'Use my location')
+            .evaluate()
+            .isNotEmpty &&
         (tester
                     .widget<OutlinedButton>(
                       find.widgetWithText(OutlinedButton, 'Use my location'),
@@ -327,18 +396,19 @@ Future<void> _openReport(WidgetTester tester, SubmissionClient client) async {
   );
 }
 
-Future<void> _openFromCatalog(WidgetTester tester) async {
+Future<void> _openFromCatalog(
+  WidgetTester tester, {
+  String requestType = 'Illegal Dumping Item Pickup',
+}) async {
   await tester.tap(find.text('Start a report'));
   await tester.pumpAndSettle();
   await tester.enterText(
     find.widgetWithText(TextField, 'Search services'),
-    'Illegal Dumping',
+    requestType,
   );
-  await _waitFor(
-    tester,
-    () => find.text('Illegal Dumping Item Pickup').evaluate().isNotEmpty,
-  );
-  await tester.tap(find.text('Illegal Dumping Item Pickup'));
+  final service = find.widgetWithText(OutlinedButton, requestType);
+  await _waitFor(tester, () => service.evaluate().isNotEmpty);
+  await tester.tap(service);
   await tester.pumpAndSettle();
   await tester.tap(find.text('Start report'));
 }

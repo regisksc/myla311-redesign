@@ -343,7 +343,11 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
         ),
         title: Text(
-          r.description.isEmpty ? 'Illegal dumping' : r.description,
+          r.description.isEmpty
+              ? r.requestType == illegalDumpingRequestType
+                    ? 'Illegal dumping'
+                    : r.requestType
+              : r.description,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(

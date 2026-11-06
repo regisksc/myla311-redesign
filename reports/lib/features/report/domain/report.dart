@@ -5,6 +5,7 @@ export 'report_contact.dart';
 export 'report_item.dart';
 
 const illegalDumpingRequestType = 'Illegal Dumping Item Pickup';
+const barricadeRemovalServiceName = 'Barricade Removal';
 
 enum ReportState { notSent, submitted, failed, submissionUncertain }
 

@@ -18,7 +18,7 @@ void main() {
         MaterialApp(
           theme: ReportsStyle.theme,
           home: ServiceCatalogPage(
-            onIllegalDumping: () {},
+            onStartReport: (_) {},
             loadCatalog: () async => [
               for (var index = 0; index < 5; index++)
                 {'name': 'Service $index', 'group': 'Animals'},

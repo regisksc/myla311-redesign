@@ -9,7 +9,7 @@ void main() {
     var opened = false;
     await tester.pumpWidget(
       MaterialApp(
-        home: ServiceCatalogPage(onIllegalDumping: () => opened = true),
+        home: ServiceCatalogPage(onStartReport: (_) => opened = true),
       ),
     );
     await tester.pumpAndSettle();

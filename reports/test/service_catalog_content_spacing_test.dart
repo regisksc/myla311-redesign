@@ -18,7 +18,7 @@ void main() {
         MaterialApp(
           theme: ReportsStyle.theme,
           home: ServiceCatalogPage(
-            onIllegalDumping: () {},
+            onStartReport: (_) {},
             loadCatalog: () async => [
               {'name': 'Service', 'group': 'Animals'},
             ],

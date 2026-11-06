@@ -79,7 +79,7 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
       field.addListener(_syncInputs);
     }
     _controller.addListener(_onChanged);
-    _controller.loadItemCatalog();
+    if (!_controller.isBarricade) _controller.loadItemCatalog();
     _controller.checkSavedAttempts();
   }
 
@@ -140,6 +140,8 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
   int? get _quantity => _controller.quantity;
   bool get _canSubmit => !_exiting && _controller.canSubmit;
   bool get _canContinue => !_exiting && _controller.canContinue;
+  bool get _isBarricade => _controller.isBarricade;
+  int get _maximumPhotos => _isBarricade ? 5 : 3;
 
   void _changeStep(int step, {bool fromReview = false}) {
     FocusScope.of(context).unfocus();
@@ -282,7 +284,9 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
-    if (_locked || _pickingPhoto || _photoPaths.length >= 3) return;
+    if (_locked || _pickingPhoto || _photoPaths.length >= _maximumPhotos) {
+      return;
+    }
     setState(() => _pickingPhoto = true);
     try {
       final x = await ImagePicker().pickImage(source: source, imageQuality: 70);
@@ -361,27 +365,35 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
     final duration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : const Duration(milliseconds: 400);
-    const labels = [
+    final labels = [
       'Location',
-      'Items',
+      _isBarricade ? 'Request details' : 'Items',
       'Photos',
-      'Details',
+      _isBarricade ? 'Comments' : 'Details',
       'Contact',
       'Review',
     ];
-    const headings = [
+    final headings = [
       'Where did you spot it?',
-      'What’s been left behind?',
+      _isBarricade
+          ? 'Tell us about the barricade.'
+          : 'What’s been left behind?',
       'Have a photo?',
       'Add a little detail.',
       'How would you like to report?',
       'Looking good? Take a look.',
     ];
-    const descriptions = [
-      'Choose the dumped items’ location on the map or use your current location.',
-      'Tell us where the items are and how many need collecting.',
+    final descriptions = [
+      _isBarricade
+          ? 'Choose the barricade’s location on the map or use your current location.'
+          : 'Choose the dumped items’ location on the map or use your current location.',
+      _isBarricade
+          ? 'Select the location of the Barricade Removal.'
+          : 'Tell us where the items are and how many need collecting.',
       'A photo can help tell the story. This step is optional.',
-      'Add a nearby landmark or access note if useful. This step is optional.',
+      _isBarricade
+          ? 'If possible, please note the City Agency the barricade belongs to.'
+          : 'Add a nearby landmark or access note if useful. This step is optional.',
       'It’s your choice. No account is needed.',
       'Check the details before sending your report to MyLA311.',
     ];
@@ -447,7 +459,10 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
                 ),
           ],
           title: number == null
-              ? const Text('New report', style: TextStyle(fontSize: 16))
+              ? Text(
+                  _isBarricade ? _controller.requestType : 'New report',
+                  style: const TextStyle(fontSize: 16),
+                )
               : const Text('Receipt'),
         ),
         body: SafeArea(
@@ -560,7 +575,7 @@ class _ReportFlowPageState extends State<ReportFlowPage> {
                           width: double.infinity,
                           child: switch (_step) {
                             0 => _locationStep(),
-                            1 => _itemsStep(),
+                            1 => _isBarricade ? _barricadeStep() : _itemsStep(),
                             2 => _photoStep(),
                             3 => _detailsStep(),
                             4 => _contactStep(),

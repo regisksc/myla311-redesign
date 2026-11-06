@@ -19,7 +19,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: ServiceCatalogPage(
-            onIllegalDumping: () {},
+            onStartReport: (_) {},
             loadCatalog: () => read.future,
           ),
         ),

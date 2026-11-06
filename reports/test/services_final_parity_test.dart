@@ -15,7 +15,7 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(
-      MaterialApp(home: ServiceCatalogPage(onIllegalDumping: () {})),
+      MaterialApp(home: ServiceCatalogPage(onStartReport: (_) {})),
     );
     await tester.pumpAndSettle();
     expect(find.text('Services'), findsNWidgets(2));

@@ -132,6 +132,64 @@ extension _ReportFlowSteps on _ReportFlowPageState {
         ]
       : _controller.items;
 
+  Widget _barricadeStep() {
+    final location = _controller.barricadeLocation;
+    final access = _controller.barricadeAccessibility;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<String>(
+          key: const Key('barricade-location'),
+          initialValue:
+              ReportFlowController.barricadeLocations.contains(location)
+              ? location
+              : null,
+          decoration: const InputDecoration(labelText: 'Barricade location'),
+          items: [
+            for (final value in ReportFlowController.barricadeLocations)
+              DropdownMenuItem(value: value, child: Text(value)),
+          ],
+          onChanged: _locked
+              ? null
+              : (value) => _controller.updateServiceAnswer(
+                  ReportFlowController.barricadeLocationQuestionId,
+                  value,
+                ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Is this a request about a disability access barrier that is made by or on behalf of a person with a disability?',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          key: const Key('barricade-accessibility'),
+          initialValue:
+              ReportFlowController.barricadeAccessibilityChoices.contains(
+                access,
+              )
+              ? access
+              : '',
+          decoration: const InputDecoration(
+            labelText: 'Access request (optional)',
+          ),
+          items: [
+            const DropdownMenuItem(value: '', child: Text('Not answered')),
+            for (final value
+                in ReportFlowController.barricadeAccessibilityChoices)
+              DropdownMenuItem(value: value, child: Text(value)),
+          ],
+          onChanged: _locked
+              ? null
+              : (value) => _controller.updateServiceAnswer(
+                  ReportFlowController.barricadeAccessibilityQuestionId,
+                  value,
+                ),
+        ),
+      ],
+    );
+  }
+
   Widget _itemsStep() {
     final catalog = _controller.itemCatalog;
     final familyName = _controller.itemFamily ?? "I'm not sure";
@@ -548,13 +606,16 @@ extension _ReportFlowSteps on _ReportFlowPageState {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Add up to 3 photos from your camera or library. Up to 10 MB each.',
+                Text(
+                  'Add up to $_maximumPhotos photos from your camera or library. Up to 10 MB each.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 OutlinedButton.icon(
-                  onPressed: _locked || _pickingPhoto || photos.length >= 3
+                  onPressed:
+                      _locked ||
+                          _pickingPhoto ||
+                          photos.length >= _maximumPhotos
                       ? null
                       : () => _pickPhoto(ImageSource.camera),
                   icon: const Icon(Icons.camera_alt),
@@ -562,7 +623,10 @@ extension _ReportFlowSteps on _ReportFlowPageState {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: _locked || _pickingPhoto || photos.length >= 3
+                  onPressed:
+                      _locked ||
+                          _pickingPhoto ||
+                          photos.length >= _maximumPhotos
                       ? null
                       : () => _pickPhoto(ImageSource.gallery),
                   icon: const Icon(Icons.photo_library_outlined),
@@ -591,7 +655,9 @@ extension _ReportFlowSteps on _ReportFlowPageState {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Text(
-        'Describe the dumped items (optional)',
+        _isBarricade
+            ? 'Additional comments (optional)'
+            : 'Describe the dumped items (optional)',
         style: Theme.of(context).textTheme.titleMedium,
       ),
       const SizedBox(height: 10),
@@ -605,8 +671,10 @@ extension _ReportFlowSteps on _ReportFlowPageState {
           _update(() {});
           _persistDraft();
         },
-        decoration: const InputDecoration(
-          hintText: 'e.g. Couch and mattress dumped on sidewalk',
+        decoration: InputDecoration(
+          hintText: _isBarricade
+              ? 'Additional comments'
+              : 'e.g. Couch and mattress dumped on sidewalk',
         ),
       ),
       const SizedBox(height: 16),
@@ -799,13 +867,23 @@ extension _ReportFlowSteps on _ReportFlowPageState {
         '${_position!.latitude.toStringAsFixed(6)}, ${_position!.longitude.toStringAsFixed(6)}',
         0,
       ),
-      _reviewSection(
-        'Items',
-        _controller.itemFamily == null
-            ? '$_quantity ${_quantity == 1 ? 'item' : 'items'} · $_debris'
-            : '${_controller.itemFamily}\n${_controller.items.map((item) => '${item.quantity} × ${item.name} · ${item.location ?? 'Location needed'}').join('\n')}',
-        1,
-      ),
+      if (_isBarricade) ...[
+        _reviewSection(
+          'Barricade location',
+          _controller.barricadeLocation ?? 'Not selected',
+          1,
+        ),
+        if (_controller.barricadeAccessibility case final answer?
+            when answer.isNotEmpty)
+          _reviewSection('Access request', answer, 1),
+      ] else
+        _reviewSection(
+          'Items',
+          _controller.itemFamily == null
+              ? '$_quantity ${_quantity == 1 ? 'item' : 'items'} · $_debris'
+              : '${_controller.itemFamily}\n${_controller.items.map((item) => '${item.quantity} × ${item.name} · ${item.location ?? 'Location needed'}').join('\n')}',
+          1,
+        ),
       _reviewSection(
         'Photo',
         _photoPaths.isEmpty
@@ -816,7 +894,7 @@ extension _ReportFlowSteps on _ReportFlowPageState {
         2,
       ),
       _reviewSection(
-        'Description',
+        _isBarricade ? 'Additional comments' : 'Description',
         _desc.text.trim().isEmpty ? 'No details added' : _desc.text.trim(),
         3,
       ),

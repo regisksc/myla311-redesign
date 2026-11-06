@@ -10,12 +10,12 @@ class ServicePreviewPage extends StatefulWidget {
     super.key,
     required this.service,
     this.draft,
-    this.onIllegalDumping,
+    this.onStartReport,
   });
 
   final Map<String, dynamic> service;
   final Map<String, dynamic>? draft;
-  final VoidCallback? onIllegalDumping;
+  final VoidCallback? onStartReport;
 
   @override
   State<ServicePreviewPage> createState() => _ServicePreviewPageState();
@@ -378,7 +378,7 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
   @override
   Widget build(BuildContext context) {
     final title = widget.service['name'] as String;
-    final canStart = accessKnown || widget.onIllegalDumping != null;
+    final canStart = accessKnown || widget.onStartReport != null;
     final content = <Widget>[
       if (step == -1) ...[
         TextButton(
@@ -420,7 +420,7 @@ class _ServicePreviewPageState extends State<ServicePreviewPage> {
                     builder: (_) => const DemoSignInPage(),
                   ),
                 );
-              } else if (widget.onIllegalDumping case final callback?) {
+              } else if (widget.onStartReport case final callback?) {
                 Navigator.of(context).pop();
                 callback();
               } else {

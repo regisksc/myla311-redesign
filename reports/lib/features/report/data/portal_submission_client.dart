@@ -56,7 +56,7 @@ class PortalSubmissionClient implements SubmissionClient {
   PortalSubmissionClient({http.Client? httpClient}) : _httpClient = httpClient;
 
   static const illegalDumpingRequestType = 'Illegal Dumping Item Pickup';
-  static const barricadeRemovalRequestType = 'Barricade Removal';
+  static const barricadeRemovalRequestType = barricadeRemovalServiceName;
 
   final http.Client? _httpClient;
 

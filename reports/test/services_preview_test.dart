@@ -7,7 +7,7 @@ void main() {
   testWidgets('creates a local preview receipt', (tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(
-      MaterialApp(home: ServiceCatalogPage(onIllegalDumping: () {})),
+      MaterialApp(home: ServiceCatalogPage(onStartReport: (_) {})),
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'Graffiti Removal');

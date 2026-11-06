@@ -7,6 +7,15 @@ import '../domain/submission_contract.dart';
 import 'report_store.dart';
 
 class ReportFlowController extends ChangeNotifier {
+  static const barricadeLocationQuestionId = 'a3Teq0000003J5XEAU';
+  static const barricadeAccessibilityQuestionId = 'a3Teq0000003J5kEAE';
+  static const barricadeLocations = ['Alley', 'Sidewalk', 'Street'];
+  static const barricadeAccessibilityChoices = [
+    'Decline to Answer',
+    'No',
+    'Yes',
+  ];
+
   ReportFlowController({
     required this.store,
     required this.client,
@@ -41,6 +50,10 @@ class ReportFlowController extends ChangeNotifier {
   final DateTime draftCreatedAt;
   final String requestType;
   Map<String, String> serviceAnswers = const {};
+  bool get isBarricade => requestType == barricadeRemovalServiceName;
+  String? get barricadeLocation => serviceAnswers[barricadeLocationQuestionId];
+  String? get barricadeAccessibility =>
+      serviceAnswers[barricadeAccessibilityQuestionId];
   final List<String> photoPaths = [];
   ({double latitude, double longitude})? position;
   String description = '';
@@ -98,7 +111,26 @@ class ReportFlowController extends ChangeNotifier {
     persistDraft();
   }
 
-  bool get _itemsValid => itemFamily == null
+  void updateServiceAnswer(String questionId, String? value) {
+    if (value == null) return;
+    _update(() {
+      final answers = {...serviceAnswers};
+      if (value.isEmpty) {
+        answers.remove(questionId);
+      } else {
+        answers[questionId] = value;
+      }
+      serviceAnswers = Map.unmodifiable(answers);
+    });
+    persistDraft();
+  }
+
+  bool get _requestDetailsValid => isBarricade
+      ? barricadeLocations.contains(barricadeLocation) &&
+            (barricadeAccessibility == null ||
+                barricadeAccessibility!.isEmpty ||
+                barricadeAccessibilityChoices.contains(barricadeAccessibility))
+      : itemFamily == null
       ? items.isEmpty && debris != null && quantity != null
       : itemCatalog?.validSelection(itemFamily!, items) ?? false;
 
@@ -193,13 +225,13 @@ class ReportFlowController extends ChangeNotifier {
               _validContactEmail(contact!.email)));
 
   bool get canSubmit =>
-      !locked && position != null && _itemsValid && contactValid;
+      !locked && position != null && _requestDetailsValid && contactValid;
 
   bool get canContinue =>
       !locked &&
       switch (step) {
         0 => position != null,
-        1 => _itemsValid,
+        1 => _requestDetailsValid,
         4 => contactValid,
         _ => true,
       };

@@ -4,16 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../design/reports_design.dart';
+import '../report/domain/report.dart';
 import 'service_preview_page.dart';
 
 class ServiceCatalogPage extends StatefulWidget {
   const ServiceCatalogPage({
     super.key,
-    required this.onIllegalDumping,
+    required this.onStartReport,
     this.loadCatalog,
   });
 
-  final VoidCallback onIllegalDumping;
+  final ValueChanged<String> onStartReport;
   final Future<List<Map<String, dynamic>>> Function()? loadCatalog;
 
   @override
@@ -45,8 +46,12 @@ class _ServiceCatalogPageState extends State<ServiceCatalogPage> {
       MaterialPageRoute<void>(
         builder: (_) => ServicePreviewPage(
           service: service,
-          onIllegalDumping: service['name'] == 'Illegal Dumping Item Pickup'
-              ? widget.onIllegalDumping
+          onStartReport:
+              [
+                illegalDumpingRequestType,
+                barricadeRemovalServiceName,
+              ].contains(service['name'])
+              ? () => widget.onStartReport(service['name'] as String)
               : null,
         ),
       ),

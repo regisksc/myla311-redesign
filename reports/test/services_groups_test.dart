@@ -7,7 +7,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(home: ServiceCatalogPage(onIllegalDumping: () {})),
+      MaterialApp(home: ServiceCatalogPage(onStartReport: (_) {})),
     );
     await tester.pumpAndSettle();
     expect(find.text('Animal Care and Control'), findsOneWidget);

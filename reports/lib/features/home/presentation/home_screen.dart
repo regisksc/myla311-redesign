@@ -103,9 +103,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return confirmed == true;
   }
 
-  Future<void> _openReport([ReportDraft? draft]) async {
+  Future<void> _openReport([
+    ReportDraft? draft,
+    String requestType = illegalDumpingRequestType,
+  ]) async {
     if (draft == null && !await _confirmDraftReplacement()) return;
     if (!mounted) return;
+    final selectedDraft =
+        draft ??
+        (requestType == illegalDumpingRequestType
+            ? null
+            : ReportDraft(
+                createdAt: DateTime.now(),
+                requestType: requestType,
+                flowVersion: 2,
+              ));
     final hero = _heroKey.currentContext?.findRenderObject();
     final scrollOffset = _homeScroll.hasClients ? _homeScroll.offset : 0.0;
     _heroBounds = hero is RenderBox && hero.hasSize
@@ -119,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (_) => ReportFlowPage(
         store: widget.store,
         client: widget.client,
-        draft: draft,
+        draft: selectedDraft,
         onAccepted: (report) {
           setState(() {
             _homeResume = SynchronousFuture(null);
@@ -155,19 +167,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openCatalog() async {
-    final selected = await Navigator.push<bool>(
+    final selected = await Navigator.push<String>(
       context,
-      MaterialPageRoute<bool>(
+      MaterialPageRoute<String>(
         builder: (catalogContext) => ServiceCatalogPage(
           loadCatalog: widget.client is PortalSubmissionClient
               ? (widget.client as PortalSubmissionClient).loadServiceCatalog
               : null,
-          onIllegalDumping: () => Navigator.pop(catalogContext, true),
+          onStartReport: (requestType) =>
+              Navigator.pop(catalogContext, requestType),
         ),
       ),
     );
-    if (selected == true && mounted) {
-      await _openReport();
+    if (selected != null && mounted) {
+      await _openReport(null, selected);
     }
   }
 
