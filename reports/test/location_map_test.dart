@@ -43,6 +43,37 @@ void main() {
     UrlLauncherPlatform.instance = originalLauncher;
     support.deleteSync(recursive: true);
   });
+  testWidgets(
+    'selected map marker announces a service-neutral report location',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: LocationMap(
+                position: (latitude: 34.054047, longitude: -118.24317),
+                enabled: true,
+                onSelected: (_) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.bySemanticsLabel('Selected report location'),
+          findsOneWidget,
+        );
+        expect(
+          find.bySemanticsLabel('Selected dumping location'),
+          findsNothing,
+        );
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
+
   testWidgets('address search waits two seconds after the final edit', (
     tester,
   ) async {

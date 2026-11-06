@@ -247,7 +247,7 @@ class _LocationMapState extends State<LocationMap> {
                               Icons.location_on,
                               size: 48,
                               color: ReportsStyle.orangeDark,
-                              semanticLabel: 'Selected dumping location',
+                              semanticLabel: 'Selected report location',
                             ),
                           ),
                         ],

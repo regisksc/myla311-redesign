@@ -485,12 +485,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             (
                               '1',
                               'Choose the location',
-                              'Use GPS at the dumping location.',
+                              'Find the address or choose a point on the map.',
                             ),
                             (
                               '2',
-                              'Describe the items',
-                              'Add the quantity, placement, and a photo.',
+                              'Describe the problem',
+                              'Add the service details and any supporting photos.',
                             ),
                             (
                               '3',
