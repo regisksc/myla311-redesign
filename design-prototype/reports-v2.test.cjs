@@ -79,7 +79,6 @@ test('the gear adds account journeys while keeping the original v2 settings', as
   });
 });
 
-
 test('the existing saved reports page can reopen a completed report for another service', async () => {
   await page.getByRole('button', { name: 'Start a report', exact: true }).click();
   await page.getByRole('textbox', { name: 'Search services' }).fill('Flooding');

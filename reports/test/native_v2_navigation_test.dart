@@ -9,6 +9,24 @@ import 'package:shared_preferences_platform_interface/shared_preferences_platfor
 import 'support/native_app_test_support.dart';
 
 void main() {
+  testWidgets('Home offers saved reports and Help without Nearby', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(
+      ReportApp(client: NoSubmissionClient(), store: MemoryReportStore()),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      {
+        'nearby': find.textContaining('Nearby').evaluate().length,
+        'saved': find.text('View saved reports').evaluate().length,
+        'help': find.text('Help and information').evaluate().length,
+      },
+      {'nearby': 0, 'saved': 1, 'help': 1},
+    );
+  });
+
   testWidgets('failed preview clearing warns and preserves real records', (
     tester,
   ) async {

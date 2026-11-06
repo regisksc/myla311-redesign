@@ -743,8 +743,7 @@ bootstrap and response decoding above. Use
 `aura.pageURI: "/s/view-service-request"`. Call order is bootstrap, `intialDetails`,
 `getSearchRequests`, then `getServiceRequestDetail` with a returned encrypted ID.
 All five retained read results returned HTTP 200, Aura `SUCCESS` and Portal
-`isSuccess: true`. They establish public City reads, not native Nearby or
-account completion.
+`isSuccess: true`. They establish public City reads, not account completion.
 
 ### Read metadata: `intialDetails`
 
@@ -807,8 +806,8 @@ records, matched using hashed identities. Literal `requestStatus: "Open"`
 returned zero, despite the three Workorder Created records. All three reads
 returned HTTP 200, Aura `SUCCESS` and `isSuccess: true`. This verifies Closed
 filtering for that sample, but does not establish the Portal's Open encoding or
-active-status grouping. Do not map the native Open label to literal `"Open"`
-without verifying the rendered Portal control. Counts are snapshots, not totals
+active-status grouping. Literal `"Open"` is not established as an active-status
+filter. Counts are snapshots, not totals
 to hardcode; the earlier six-record result remains a separate observation.
 
 ### Detail: `getServiceRequestDetail`

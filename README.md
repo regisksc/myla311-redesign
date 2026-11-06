@@ -8,7 +8,7 @@ through one consistent mobile experience.
 
 **Product design and engineering by [regisksc](https://github.com/regisksc).**
 
-![MyLA311: mobile Home and city-service catalog in the orange visual identity](docs/images/reports-cover.png)
+![MyLA311: mobile Home hero and city-service catalog in the orange visual identity](docs/images/reports-cover.png)
 
 *Actual native app captures with synthetic example data. Screenshots demonstrate
 the interface, not acceptance of these examples by the City.*

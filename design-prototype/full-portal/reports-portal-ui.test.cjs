@@ -35,6 +35,7 @@ test('normalizes catalog evidence without inventing capabilities', () => {
 test('the portal shell exposes four resident destinations and a local-demo notice', () => {
   const html = fs.readFileSync(path.join(__dirname, 'reports-full-portal.html'), 'utf8');
   for (const name of ['Home', 'Services', 'My Reports', 'Account']) assert.match(html, new RegExp(`>${name}<`));
+  assert.doesNotMatch(html, /data-route="nearby"/);
   assert.match(html, /Local design demo/);
 });
 
@@ -343,8 +344,9 @@ test('update preferences stay on the device', () => {
   handlers.input({ target: { dataset: { setting: 'updates' }, type: 'checkbox', checked: true } });
   click({ route: 'settings' });
   assert.equal(fields[0].checked, true);
+  assert.equal(fields[1].value, undefined);
+  assert.equal(JSON.parse(values['reports-demo-settings']).updates, true);
 });
-
 
 test('unreadable or unavailable preview storage keeps resident pages usable without replacing saved data', () => {
   const recoverable = { id: 'local-kept', name: 'Flooding', serviceId: 'flooding', status: 'Draft', draft: { step: 'details' } };
@@ -375,10 +377,9 @@ test('unreadable or unavailable preview storage keeps resident pages usable with
     assert.doesNotThrow(() => ui.mount(doc, catalog, flow, storage, false, navigation));
     const click = (dataset) => handlers.click({ target: { closest: () => ({ dataset }) }, preventDefault() {} });
     assert.match(main.innerHTML, /Services/);
-    click({ route: 'account' });
     handlers.input({ target: { dataset: { setting: 'updates' }, type: 'checkbox', checked: true } });
-    assert.match(main.innerHTML, /stay in this session/);
     click({ route: 'account' });
+    assert.match(main.innerHTML, /stay in this session/);
     click({ route: 'settings' });
     assert.match(main.innerHTML, /Your account/);
     handlers.submit({ target: { dataset: { form: 'profile' }, elements: [{ name: 'name', value: 'Session resident' }] }, preventDefault() {} });
