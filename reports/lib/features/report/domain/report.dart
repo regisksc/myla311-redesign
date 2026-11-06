@@ -4,6 +4,8 @@ import 'report_item.dart';
 export 'report_contact.dart';
 export 'report_item.dart';
 
+const illegalDumpingRequestType = 'Illegal Dumping Item Pickup';
+
 enum ReportState { notSent, submitted, failed, submissionUncertain }
 
 class ReportDraft {
@@ -22,8 +24,11 @@ class ReportDraft {
     this.rememberContact = false,
     this.itemFamily,
     List<ReportItem> items = const [],
+    this.requestType = illegalDumpingRequestType,
+    Map<String, String> serviceAnswers = const {},
   }) : photoPaths = List.unmodifiable(photoPaths ?? [?photoPath]),
-       items = List.unmodifiable(items);
+       items = List.unmodifiable(items),
+       serviceAnswers = Map.unmodifiable(serviceAnswers);
 
   final DateTime createdAt;
   final String description;
@@ -39,6 +44,8 @@ class ReportDraft {
   final bool rememberContact;
   final String? itemFamily;
   final List<ReportItem> items;
+  final String requestType;
+  final Map<String, String> serviceAnswers;
 
   Map<String, dynamic> toJson() => {
     'createdAt': createdAt.toIso8601String(),
@@ -55,6 +62,8 @@ class ReportDraft {
     if (contact != null) 'contact': contact!.toJson(),
     if (itemFamily != null) 'itemFamily': itemFamily,
     if (items.isNotEmpty) 'items': items.map((item) => item.toJson()).toList(),
+    if (requestType != illegalDumpingRequestType) 'requestType': requestType,
+    if (serviceAnswers.isNotEmpty) 'serviceAnswers': serviceAnswers,
   };
 
   factory ReportDraft.fromJson(Map<String, dynamic> json) => ReportDraft(
@@ -72,6 +81,9 @@ class ReportDraft {
     flowVersion: 2,
     rememberContact: json['rememberContact'] as bool? ?? false,
     itemFamily: json['itemFamily'] as String?,
+    requestType: json['requestType'] as String? ?? illegalDumpingRequestType,
+    serviceAnswers: (json['serviceAnswers'] as Map? ?? {})
+        .cast<String, String>(),
     items: (json['items'] as List? ?? [])
         .map((item) => ReportItem.fromJson(item as Map<String, dynamic>))
         .toList(),

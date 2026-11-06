@@ -28,6 +28,40 @@ void main() {
     await supportDirectory.delete(recursive: true);
   });
 
+  test('a saved draft retains its original City service answers', () async {
+    final answers = {'a3Teq0000003J5XEAU': 'Street'};
+    final draft = ReportDraft.fromJson({
+      'createdAt': '2026-11-06T09:00:00.000',
+      'description': 'Barricade left in the street',
+      'latitude': 34.05,
+      'longitude': -118.24,
+      'quantity': '',
+      'step': 2,
+      'flowVersion': 2,
+      'requestType': 'Barricade Removal',
+      'serviceAnswers': answers,
+    });
+    answers['a3Teq0000003J5XEAU'] = 'Sidewalk';
+
+    await testStore.saveDraft(draft);
+    final restored = await testStore.loadDraft();
+
+    expect(restored?.toJson(), {
+      'createdAt': '2026-11-06T09:00:00.000',
+      'description': 'Barricade left in the street',
+      'latitude': 34.05,
+      'longitude': -118.24,
+      'photoPath': null,
+      'debrisLocation': null,
+      'quantity': '',
+      'step': 2,
+      'flowVersion': 2,
+      'rememberContact': false,
+      'requestType': 'Barricade Removal',
+      'serviceAnswers': {'a3Teq0000003J5XEAU': 'Street'},
+    });
+  });
+
   test(
     'local removal preserves uncertain markers and stale actions cannot clear them',
     () async {
