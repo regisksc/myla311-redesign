@@ -31,6 +31,8 @@ class ReportDetailPage extends StatelessWidget {
           ? retained!
           : ReportDraft(
               createdAt: report.createdAt,
+              requestType: report.requestType,
+              serviceAnswers: report.serviceAnswers,
               description: report.description,
               latitude: report.latitude,
               longitude: report.longitude,

@@ -65,6 +65,54 @@ void main() {
   });
 
   testWidgets(
+    'correcting a Barricade report retains its request type and answers',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final report = Report(
+        requestType: 'Barricade Removal',
+        serviceAnswers: const {
+          'a3Teq0000003J5XEAU': 'Street',
+          'a3Teq0000003J5kEAE': 'Yes',
+        },
+        description: 'City barricade blocks the sidewalk',
+        latitude: 34.0522,
+        longitude: -118.2437,
+        createdAt: DateTime(2026, 10, 28),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ReportsStyle.theme,
+          home: ReportDetailPage(
+            store: MemoryReportStore(),
+            report: report,
+            client: NoSubmissionClient(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Correct report'));
+      await tester.tap(find.text('Correct report'));
+      await tester.pumpAndSettle();
+      final draft = tester
+          .widget<ReportFlowPage>(find.byType(ReportFlowPage))
+          .draft!;
+      expect(
+        {'type': draft.requestType, 'answers': draft.serviceAnswers},
+        {
+          'type': 'Barricade Removal',
+          'answers': {
+            'a3Teq0000003J5XEAU': 'Street',
+            'a3Teq0000003J5kEAE': 'Yes',
+          },
+        },
+      );
+      expect(find.text('Barricade location'), findsOneWidget);
+      expect(find.text('Street'), findsOneWidget);
+      expect(find.text('Yes'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'correcting a saved report retains its contact and selected items',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
