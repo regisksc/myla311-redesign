@@ -1,10 +1,11 @@
-# MyLA311 Portal API: illegal-dumping Submission
+# MyLA311 Portal API
 
 > **File:** `docs/portal-api.md`
 
 Agent-facing endpoint reference for the MyLA311 Portal
-(`https://myla311.lacity.gov`), happy path only: a guest files an
-**Illegal Dumping Item Pickup** request. Built from real browser traffic
+(`https://myla311.lacity.gov`), covering the guest **Illegal Dumping Item Pickup**
+contract and the captured **Barricade Removal** journey through final review.
+Built from real browser traffic
 (Playwright MCP, 2026-10-21) plus the Portal's own JavaScript, followed by
 read-only HTTP replays and one separately recorded helper submission.
 
@@ -74,6 +75,85 @@ Cancel aborts locally and cannot prove the City did not receive a write. The
 automatically. Its latest 12 history summaries stay in memory and omit bodies
 and session values. No live City write or acceptance was verified for this
 inspector.
+
+## Barricade Removal: captured guest contract, 5 November 2026
+
+The City browser journey reached **Review & Submit** with anonymous contact,
+the location choice **Street**, no attachments, and the verified public address
+**200 N MAIN ST, LOS ANGELES, CA 90012**. The **Submit** button was not pressed.
+This verifies discovery, questions, address validation and similar-request reads.
+Barricade dispatch, server acceptance and native completion remain unverified.
+
+The retained sanitized HAR, `barricade-review.har`, contains ten Apex exchanges.
+Its SHA-256 is
+`edde5b34c874b33f820f55c4aeb00cb77f38c5df90b977d01c9a6de8cb2f2420`.
+Every recorded exchange returned HTTP 200 with Aura action state `SUCCESS`;
+there is no `submitCase` exchange in the capture. The HAR stays in local evidence,
+outside the published source tree.
+
+### Discovery and call order
+
+Use the common Aura transport below, with a current guest bootstrap.
+
+1. `X11_H_ParentController.fetchInitialDetails`: select the entry whose
+   `uxType` is `Barricade Removal` and `uxGroup` is `Street Problems/Repairs`.
+   Read its current `caseConfigId`; encrypted identifiers are session-specific.
+2. `X11_RI_ParentController.fetchCaseTypeDetails`: send
+   `{"caseTypeId":"<current decoded catalog ID>","parentWorkOrderId":"","isSNC":false}`.
+   The captured page URI was `/s/report-issue?c__IssueTypeId=<encoded ID>&c__IsPortalUser=true`.
+   Its successful response contains `objCaseConfigWrapper` and
+   `contactWrapperResponse`.
+3. `LA_AddressController.validateOriginalAddress`: send
+   `{"address":"200 N Main St, Los Angeles, CA 90012"}`. Read the returned
+   address and validation result, rather than substituting an illustrative pin.
+4. `X11_RI_ParentController.getRelatedCaseLst`: the browser sent
+   `{"caseType":"Barricade Removal","caseLatitude":34.053264,"caseLongitude":-118.242189}`.
+   It then advanced to final review. These are the captured coordinates;
+   implementations must use the resident's validated location.
+
+The similar-request response carried `isSuccess:false` with
+`message:"No Data Available"`. The browser continued to final review; the
+capture establishes an empty result, not returned matching requests.
+
+The browser called `fetchCaseTypeDetails` twice with identical parameters.
+That duplication is observed browser behavior, not a requirement to duplicate
+the native request. The contact selector offered anonymous **Yes** and **No**;
+only the anonymous path was exercised in this capture.
+
+### Questions and validation
+
+Read `sQuestion`, `sQuestionType`, `sFieldtoUpdate`, `brequired`, `lstOptions`,
+`sAnswer`, visibility and validation metadata from the fresh configuration.
+There are three configured questions and no preliminary questions.
+
+| City field | Question and accepted values | Required |
+| --- | --- | --- |
+| `Problem_Type__c` | Select the location of the Barricade Removal: `Alley`, `Sidewalk`, `Street` | Yes |
+| `Description` | Additional Comments, up to 750 characters | No |
+| `ADA_Question__c` | Disability-access question: `Decline to Answer`, `No`, `Yes`; empty is permitted | No |
+
+Captured question IDs, in that order, were `a3Teq0000003J5XEAU`,
+`a3Teq0000003J4nEAE` and `a3Teq0000003J5kEAE`. Match the current configuration;
+do not treat these captured IDs as permanent. An unanswered optional question
+must remain unanswered. In particular, do not invent a disability answer.
+
+The configuration identifies `sCaseType: Barricade Removal`,
+`sCaseCategory: Street Problems/Repairs`, `sCasePriority: Normal` and
+`sCaseDefaultStatus: New`. It allows anonymous reporting and requires a map
+location within `City Boundary`; `locatorRequired` is false.
+
+### Evidence and submission boundary
+
+Uploads are optional. The configuration advertises five files and
+`.heic;.heif;.jpeg;.jpg;.pdf;.png;.webp`. The browser additionally displays a
+10 MB maximum per image and at most one PDF of 3 MB. No file upload or aggregate
+payload limit was exercised. The existing dumping client's three-photo limit
+does not establish Barricade's upload support.
+
+The shared `submitCase` envelope below is source-derived. A Barricade payload
+must carry Barricade's own configuration, answers and validated address;
+the existing dumping answer builder cannot be reused unchanged. No captured
+Barricade submit payload or accepted Service Request response is available yet.
 
 ## Platform
 
