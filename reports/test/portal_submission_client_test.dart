@@ -189,6 +189,51 @@ Map<String, Object?> _locatorHit() => _envelope(
   }),
 );
 
+Map<String, Object?> _barricadeTypeDetails() => {
+  ..._caseTypeDetails(),
+  'objCaseConfigWrapper': {
+    'sCaseType': 'Barricade Removal',
+    'sCaseCategory': 'Street Problems/Repairs',
+    'sCasePriority': 'Normal',
+    'sCaseDefaultStatus': 'New',
+    'sImageCount': 5,
+    'dwpContainerLst': null,
+    'lstBeforeCaseQuestion': <Object>[],
+    'lstCaseQuestion': [
+      {
+        ..._question('ADA_Question__c', 2.9, 'Picklist', display: true),
+        'sQuestionId': 'a3Teq0000003J5kEAE',
+        'lstOptions': [
+          {'value': ''},
+          {'value': 'Decline to Answer'},
+          {'value': 'No'},
+          {'value': 'Yes'},
+        ],
+      },
+      {
+        ..._question('Description', 2.1, 'TextArea', display: true),
+        'sQuestionId': 'a3Teq0000003J4nEAE',
+        'lstValidations': [
+          {'maximumLimit': '750', 'required': false},
+        ],
+      },
+      {
+        ..._question('Problem_Type__c', 1, 'Picklist', display: true),
+        'sQuestionId': 'a3Teq0000003J5XEAU',
+        'sParentAnswer': 'Barricade Removal',
+        'brequired': true,
+        'lstOptions': [
+          {'value': ''},
+          {'value': 'Alley'},
+          {'value': 'Sidewalk'},
+          {'value': 'Street'},
+        ],
+      },
+      _question(null, 0, 'Section'),
+    ],
+  },
+};
+
 Map<String, Object?> _caseCreated() => _envelope(
   isSuccess: true,
   response: {
@@ -819,48 +864,7 @@ void main() {
     test(
       'Barricade sends only with fresh independent service configuration',
       () async {
-        final details = _caseTypeDetails();
-        details['objCaseConfigWrapper'] = {
-          'sCaseType': 'Barricade Removal',
-          'sCaseCategory': 'Street Problems/Repairs',
-          'sCasePriority': 'Normal',
-          'sCaseDefaultStatus': 'New',
-          'sImageCount': 5,
-          'dwpContainerLst': null,
-          'lstBeforeCaseQuestion': <Object>[],
-          'lstCaseQuestion': [
-            {
-              ..._question('ADA_Question__c', 2.9, 'Picklist', display: true),
-              'sQuestionId': 'a3Teq0000003J5kEAE',
-              'lstOptions': [
-                {'value': ''},
-                {'value': 'Decline to Answer'},
-                {'value': 'No'},
-                {'value': 'Yes'},
-              ],
-            },
-            {
-              ..._question('Description', 2.1, 'TextArea', display: true),
-              'sQuestionId': 'a3Teq0000003J4nEAE',
-              'lstValidations': [
-                {'maximumLimit': '750', 'required': false},
-              ],
-            },
-            {
-              ..._question('Problem_Type__c', 1, 'Picklist', display: true),
-              'sQuestionId': 'a3Teq0000003J5XEAU',
-              'sParentAnswer': 'Barricade Removal',
-              'brequired': true,
-              'lstOptions': [
-                {'value': ''},
-                {'value': 'Alley'},
-                {'value': 'Sidewalk'},
-                {'value': 'Street'},
-              ],
-            },
-            _question(null, 0, 'Section'),
-          ],
-        };
+        final details = _barricadeTypeDetails();
         final replies = _happyReplies()
           ..['fetchCaseTypeDetails'] = _envelope(
             isSuccess: true,
@@ -994,6 +998,64 @@ void main() {
       );
       expect(portal.calls.map((call) => call.method), ['fetchInitialDetails']);
     });
+
+    test(
+      'a new City default cannot silently answer a Barricade question',
+      () async {
+        final details = _barricadeTypeDetails();
+        final config = details['objCaseConfigWrapper'] as Map;
+        final questions = (config['lstCaseQuestion'] as List).cast<Map>();
+        questions.first['sDefaultValue'] = 'Yes';
+        final portal = _FakePortal({
+          ..._happyReplies(),
+          'fetchInitialDetails': _envelope(
+            isSuccess: true,
+            response: {
+              'popularCaseList': [
+                {
+                  'uxType': 'Barricade Removal',
+                  'caseConfigId': 'fixture-barricade',
+                },
+              ],
+            },
+          ),
+          'fetchCaseTypeDetails': _envelope(isSuccess: true, response: details),
+        });
+        addTearDown(portal.client.close);
+        final report = Report(
+          requestType: 'Barricade Removal',
+          serviceAnswers: const {'a3Teq0000003J5XEAU': 'Street'},
+          description: '',
+          contact: const ReportContact(anonymous: true),
+          latitude: 34.054047,
+          longitude: -118.24317,
+          createdAt: DateTime.utc(2026, 11, 6),
+        );
+
+        final result = await PortalSubmissionClient(
+          httpClient: portal.client,
+        ).send(report);
+
+        expect(
+          result,
+          isA<SubmissionFailed>()
+              .having(
+                (result) => result.kind,
+                'kind',
+                SubmissionFailureKind.rejected,
+              )
+              .having(
+                (result) => result.message,
+                'message',
+                'City Barricade questions changed or answers are invalid. No request was sent.',
+              ),
+        );
+        expect(portal.calls.map((call) => call.method), [
+          'fetchInitialDetails',
+          'fetchCaseTypeDetails',
+        ]);
+      },
+    );
 
     test(
       'happy path returns the Service Request number from submitCase',
