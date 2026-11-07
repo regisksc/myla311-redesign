@@ -961,6 +961,40 @@ void main() {
       },
     );
 
+    test('a missing City request type is rejected before submission', () async {
+      final portal = _FakePortal({
+        ..._happyReplies(),
+        'fetchInitialDetails': _envelope(
+          isSuccess: true,
+          response: {
+            'popularCaseList': <Object>[],
+            'caseConfigurationList': <Object>[],
+          },
+        ),
+      });
+      addTearDown(portal.client.close);
+
+      final result = await PortalSubmissionClient(
+        httpClient: portal.client,
+      ).send(_report());
+
+      expect(
+        result,
+        isA<SubmissionFailed>()
+            .having(
+              (result) => result.kind,
+              'kind',
+              SubmissionFailureKind.rejected,
+            )
+            .having(
+              (result) => result.message,
+              'message',
+              'The Portal does not list Illegal Dumping Item Pickup.',
+            ),
+      );
+      expect(portal.calls.map((call) => call.method), ['fetchInitialDetails']);
+    });
+
     test(
       'happy path returns the Service Request number from submitCase',
       () async {
