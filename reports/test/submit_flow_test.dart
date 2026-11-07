@@ -12,6 +12,8 @@ import 'package:reports/features/report/domain/report.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 
+import 'support/native_app_test_support.dart';
+
 const testStore = LocalReportStore();
 
 const _locationChannel = MethodChannel('flutter.baseflow.com/geolocator');
@@ -109,6 +111,44 @@ void main() {
       expect(find.text('Illegal dumping'), findsNothing);
     },
   );
+
+  testWidgets('clearing the optional Barricade answer saves it unanswered', (
+    tester,
+  ) async {
+    final store = MemoryReportStore()
+      ..draft = ReportDraft(
+        createdAt: DateTime(2026, 11, 6),
+        requestType: 'Barricade Removal',
+        latitude: 34.054047,
+        longitude: -118.24317,
+        step: 1,
+        serviceAnswers: const {'a3Teq0000003J5XEAU': 'Street'},
+      );
+    await tester.pumpWidget(
+      ReportApp(store: store, client: NoSubmissionClient()),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    final access = find.byKey(const Key('barricade-accessibility'));
+    await tester.ensureVisible(access);
+    await tester.tap(access);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Yes').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Yes'), findsOneWidget);
+
+    await tester.tap(access);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Not answered').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save and close'));
+    await tester.pumpAndSettle();
+
+    expect((await store.loadDraft())!.serviceAnswers, {
+      'a3Teq0000003J5XEAU': 'Street',
+    });
+  });
 
   testWidgets(
     'the native form saves an attempt before sending and shows its receipt',
